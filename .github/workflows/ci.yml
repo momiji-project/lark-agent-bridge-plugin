@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '20.12.0'
       - name: Validate repository structure
@@ -22,7 +22,8 @@ jobs:
         run: node --test plugins/lark-agent-bridge/tests/*.test.mjs
       - name: Check for common secret patterns
         run: |
-          if grep -RInE --exclude-dir=.git --exclude='*.md' '(cli_[A-Za-z0-9]{16,}|(app[_-]?secret|access[_-]?token)[[:space:]]*[:=][[:space:]]*["'"'][^"'"']{8,})' .; then
+          if grep -RInE --exclude-dir=.git --exclude='*.md' 'cli_[A-Za-z0-9]{16,}' . || \
+             grep -RInE --exclude-dir=.git --exclude='*.md' '(app[_-]?secret|access[_-]?token)[[:space:]]*[:=]' .; then
             echo 'Potential secret detected.' >&2
             exit 1
           fi
@@ -36,7 +37,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node }}
       - run: node --test plugins/lark-agent-bridge/tests/*.test.mjs

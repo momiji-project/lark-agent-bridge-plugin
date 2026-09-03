@@ -69,9 +69,9 @@ async function makeFakeCommands(directory, { initialVersion = "0.6.1", runningPr
   await writeFile(versionFile, initialVersion);
   await writeFile(logFile, "");
 
-  const bridge = path.join(stateDirectory, "bridge.mjs");
+  const bridgeScript = path.join(stateDirectory, "bridge.mjs");
   await writeFile(
-    bridge,
+    bridgeScript,
     `#!/usr/bin/env node
 import fs from "node:fs";
 const args = process.argv.slice(2);
@@ -92,11 +92,11 @@ process.exit(2);
 `,
     { mode: 0o700 },
   );
-  await chmod(bridge, 0o700);
+  await chmod(bridgeScript, 0o700);
 
-  const npm = path.join(stateDirectory, "npm.mjs");
+  const npmScript = path.join(stateDirectory, "npm.mjs");
   await writeFile(
-    npm,
+    npmScript,
     `#!/usr/bin/env node
 import fs from "node:fs";
 const args = process.argv.slice(2);
@@ -111,7 +111,16 @@ fs.writeFileSync(process.env.FAKE_VERSION_FILE, spec.slice(spec.lastIndexOf("@")
 `,
     { mode: 0o700 },
   );
-  await chmod(npm, 0o700);
+  await chmod(npmScript, 0o700);
+
+  let bridge = bridgeScript;
+  let npm = npmScript;
+  if (process.platform === "win32") {
+    bridge = path.join(stateDirectory, "bridge.cmd");
+    npm = path.join(stateDirectory, "npm.cmd");
+    await writeFile(bridge, `@echo off\r\n"${process.execPath}" "${bridgeScript}" %*\r\n`);
+    await writeFile(npm, `@echo off\r\n"${process.execPath}" "${npmScript}" %*\r\n`);
+  }
 
   return {
     LARK_BRIDGE_MANAGER_BRIDGE: bridge,
@@ -332,7 +341,9 @@ test("rules appends a managed CLAUDE block, preserves manual text, and is idempo
   const firstPayload = JSON.parse(first.stdout);
   assert.equal(firstPayload.changed, true);
   assert.deepEqual(await readFile(firstPayload.backupPath, "utf8"), manual);
-  const rulesAsset = (await readFile(path.resolve(TEST_DIR, "../assets/rules/bridge-session.md"), "utf8")).trim();
+  const rulesAsset = (await readFile(path.resolve(TEST_DIR, "../assets/rules/bridge-session.md"), "utf8"))
+    .replaceAll("\r\n", "\n")
+    .trim();
   const updated = await readFile(targetFile, "utf8");
   assert.equal(updated.startsWith(manual), true);
   assert.equal(updated.includes(rulesAsset), true);
