@@ -1,0 +1,10 @@
+{
+  "name": "sfl-lark-ai-suite",
+  "version": "0.1.0",
+  "description": "Lark接続とMinutes画像議事録を一つにまとめて導入・設定するプラグイン",
+  "author": {
+    "name": "Salon Flow Love"
+  },
+  "homepage": "https://sfl-lark-ai-bridge-guide.pages.dev/",
+  "license": "MIT"
+}

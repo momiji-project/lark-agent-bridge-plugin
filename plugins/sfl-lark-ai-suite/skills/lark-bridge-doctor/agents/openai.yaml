@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lark Bridge 診断"
+  short_description: "Bridge・エージェント・常駐サービスを安全に診断"
+  default_prompt: "Lark Bridgeの状態を診断してください"

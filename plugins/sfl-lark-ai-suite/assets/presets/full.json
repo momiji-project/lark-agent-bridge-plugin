@@ -1,0 +1,27 @@
+{
+  "name": "full",
+  "description": "全ファイル・コマンド操作を許可します。明示確認と追加の安全ゲートが必要です。",
+  "requiresExplicitConfirmation": true,
+  "profile": {
+    "mode": "personal",
+    "permissions": {
+      "defaultAccess": "full",
+      "maxAccess": "full"
+    },
+    "preferences": {
+      "model": "default",
+      "messageReply": "text",
+      "messageReplyMigrated": true,
+      "showToolCalls": false,
+      "cotMessages": "off",
+      "maxConcurrentRuns": 1,
+      "runIdleTimeoutMinutes": 10
+    },
+    "access": {
+      "requireMentionInGroup": true
+    },
+    "larkCli": {
+      "identityPreset": "bot-only"
+    }
+  }
+}

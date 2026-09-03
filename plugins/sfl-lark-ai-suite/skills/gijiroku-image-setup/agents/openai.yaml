@@ -1,0 +1,6 @@
+interface:
+  display_name: "画像議事録 初回セットアップ"
+  short_description: "参考画像・スタイル・ロゴ・起動方法を対話設定する"
+  default_prompt: "Use $gijiroku-image-setup to configure my image-minutes preferences and Lark trigger style."
+policy:
+  allow_implicit_invocation: true

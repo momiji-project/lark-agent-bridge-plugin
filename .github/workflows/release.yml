@@ -19,17 +19,22 @@ jobs:
       - name: Validate
         run: |
           node scripts/validate-repository.mjs
-          node --test plugins/lark-agent-bridge/tests/*.test.mjs
+          node scripts/validate-unified-plugin.mjs
+          node --test plugins/lark-agent-bridge/tests/*.test.mjs plugins/sfl-lark-ai-suite/tests/*.test.mjs
       - name: Verify tag matches manifest
         run: |
           expected="v$(node -p "require('./plugins/lark-agent-bridge/.codex-plugin/plugin.json').version")"
           test "$GITHUB_REF_NAME" = "$expected"
+          unified="v$(node -p "require('./plugins/sfl-lark-ai-suite/.codex-plugin/plugin.json').version")"
+          test "$GITHUB_REF_NAME" = "$unified"
       - name: Package plugin
         run: |
           mkdir -p release
           tar -czf "release/lark-agent-bridge-${GITHUB_REF_NAME}.tar.gz" -C plugins lark-agent-bridge
+          tar -czf "release/sfl-lark-ai-suite-${GITHUB_REF_NAME}.tar.gz" -C plugins sfl-lark-ai-suite
           cd plugins
           zip -qr "../release/lark-agent-bridge-${GITHUB_REF_NAME}.zip" lark-agent-bridge
+          zip -qr "../release/sfl-lark-ai-suite-${GITHUB_REF_NAME}.zip" sfl-lark-ai-suite
           cd ../release
           sha256sum *.tar.gz *.zip > SHA256SUMS
       - name: Publish GitHub Release

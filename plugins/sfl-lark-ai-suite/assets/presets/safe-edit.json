@@ -1,0 +1,26 @@
+{
+  "name": "safe-edit",
+  "description": "既定。指定workspace内の編集だけを許可します。",
+  "profile": {
+    "mode": "personal",
+    "permissions": {
+      "defaultAccess": "workspace",
+      "maxAccess": "workspace"
+    },
+    "preferences": {
+      "model": "default",
+      "messageReply": "text",
+      "messageReplyMigrated": true,
+      "showToolCalls": false,
+      "cotMessages": "off",
+      "maxConcurrentRuns": 1,
+      "runIdleTimeoutMinutes": 10
+    },
+    "access": {
+      "requireMentionInGroup": true
+    },
+    "larkCli": {
+      "identityPreset": "bot-only"
+    }
+  }
+}

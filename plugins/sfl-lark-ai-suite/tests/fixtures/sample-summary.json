@@ -1,0 +1,33 @@
+{
+  "title": "画像議事録Bridge 仕様確認会議",
+  "meeting_date": "2026-09-03",
+  "participants": ["森山", "開発担当"],
+  "summary_depth": "standard",
+  "overview": [
+    "既存のLark Bridgeを利用し、Minutesの逐字稿から画像形式の議事録を作成する方針を確認した。"
+  ],
+  "key_points": [
+    {
+      "heading": "初回設定",
+      "details": ["要約量", "画像テイスト", "ロゴ有無を一つずつ質問する"]
+    },
+    {
+      "heading": "レイアウト",
+      "details": ["固定指定を求めず、会議内容と情報量から自動で構成する"]
+    }
+  ],
+  "decisions": [
+    "新しいBridgeや常駐プロセスは追加しない。",
+    "画像生成した背景へ正確な日本語を合成する。"
+  ],
+  "action_items": [
+    {
+      "task": "プラグインの初回セットアップを実行する",
+      "owner": "利用者",
+      "due": "導入時"
+    }
+  ],
+  "open_questions": [
+    "実運用するBridgeプロファイルでMinutesのuser認証を確認する。"
+  ]
+}

@@ -12,6 +12,12 @@
       "description": "lark-channel-bridgeの導入、エージェント設定、診断、更新を支援します。",
       "source": "./plugins/lark-agent-bridge",
       "category": "productivity"
+    },
+    {
+      "name": "sfl-lark-ai-suite",
+      "description": "Bridge接続とLark Minutes画像議事録を一つにまとめて導入・設定します。",
+      "source": "./plugins/sfl-lark-ai-suite",
+      "category": "productivity"
     }
   ]
 }

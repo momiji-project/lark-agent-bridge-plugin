@@ -1,0 +1,4 @@
+interface:
+  display_name: "SFL Lark かんたんセットアップ"
+  short_description: "Bridgeと画像議事録をおすすめ設定でまとめて導入"
+  default_prompt: "$sfl-lark-setup を使って、Bridgeと画像議事録をおすすめ設定で一括導入してください。"
