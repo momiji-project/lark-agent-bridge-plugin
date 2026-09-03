@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bridge エージェント設定"
+  short_description: "Claude CodeとCodexの設定・ルールを安全に適用"
+  default_prompt: "Bridgeで使うエージェント設定を整えてください"

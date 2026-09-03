@@ -1,0 +1,14 @@
+.DS_Store
+node_modules/
+coverage/
+dist/
+*.log
+*.tmp
+*.bak
+.env
+.env.*
+!.env.example
+secrets.enc
+config.json
+profile.json
+release/

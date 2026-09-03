@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lark Bridge 更新"
+  short_description: "Lark Bridgeを検証付きで更新し、停止中のプロファイルを保持"
+  default_prompt: "Lark Bridgeを安全に最新版へ更新してください"

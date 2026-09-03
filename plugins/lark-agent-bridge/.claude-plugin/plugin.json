@@ -1,0 +1,11 @@
+{
+  "name": "lark-agent-bridge",
+  "version": "0.1.0",
+  "description": "lark-channel-bridgeをClaude CodeまたはCodex向けに安全に導入・設定・診断・更新するプラグイン",
+  "author": {
+    "name": "momiji-project"
+  },
+  "homepage": "https://github.com/momiji-project/lark-agent-bridge-plugin",
+  "repository": "https://github.com/momiji-project/lark-agent-bridge-plugin",
+  "license": "MIT"
+}

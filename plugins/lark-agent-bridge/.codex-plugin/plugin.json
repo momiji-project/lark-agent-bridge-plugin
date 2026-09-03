@@ -1,0 +1,28 @@
+{
+  "name": "lark-agent-bridge",
+  "version": "0.1.0",
+  "description": "Install, configure, diagnose, and update lark-channel-bridge for Claude Code and Codex without hand-editing secrets or profile files.",
+  "author": {
+    "name": "momiji-project",
+    "url": "https://github.com/momiji-project"
+  },
+  "homepage": "https://github.com/momiji-project/lark-agent-bridge-plugin",
+  "repository": "https://github.com/momiji-project/lark-agent-bridge-plugin",
+  "license": "MIT",
+  "keywords": ["lark", "feishu", "bridge", "claude-code", "codex"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Lark Agent Bridge",
+    "shortDescription": "LarkからClaude CodeとCodexを安全に導入・設定",
+    "longDescription": "既存のlark-channel-bridgeを利用し、依存関係の確認、QR登録、プロファイル作成、安全プリセット、診断、更新を一貫して支援します。秘密情報はプラグインやGitへ保存しません。",
+    "developerName": "momiji-project",
+    "category": "Productivity",
+    "capabilities": ["Local setup", "Diagnostics", "Agent configuration"],
+    "websiteURL": "https://github.com/momiji-project/lark-agent-bridge-plugin",
+    "defaultPrompt": [
+      "Lark BridgeをこのPCに初期設定してください",
+      "Lark Bridgeの状態を診断してください",
+      "Bridgeで使うエージェント設定を整えてください"
+    ]
+  }
+}

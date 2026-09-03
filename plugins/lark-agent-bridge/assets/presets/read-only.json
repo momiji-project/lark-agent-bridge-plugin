@@ -1,0 +1,26 @@
+{
+  "name": "read-only",
+  "description": "調査・確認専用。ファイル変更や外部書き込みを許可しません。",
+  "profile": {
+    "mode": "personal",
+    "permissions": {
+      "defaultAccess": "read-only",
+      "maxAccess": "read-only"
+    },
+    "preferences": {
+      "model": "default",
+      "messageReply": "text",
+      "messageReplyMigrated": true,
+      "showToolCalls": false,
+      "cotMessages": "off",
+      "maxConcurrentRuns": 1,
+      "runIdleTimeoutMinutes": 10
+    },
+    "access": {
+      "requireMentionInGroup": true
+    },
+    "larkCli": {
+      "identityPreset": "bot-only"
+    }
+  }
+}

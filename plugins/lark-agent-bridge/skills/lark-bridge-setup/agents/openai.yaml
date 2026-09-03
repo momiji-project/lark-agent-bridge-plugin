@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lark Bridge 初期設定"
+  short_description: "Lark Bridgeを安全に導入し、Larkとの疎通まで案内"
+  default_prompt: "Lark BridgeをこのPCに初期設定してください"

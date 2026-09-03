@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "momiji-lark-tools",
+  "description": "LarkからClaude CodeまたはCodexを安全に利用するための導入・設定プラグイン",
+  "owner": {
+    "name": "momiji-project",
+    "url": "https://github.com/momiji-project"
+  },
+  "plugins": [
+    {
+      "name": "lark-agent-bridge",
+      "description": "lark-channel-bridgeの導入、エージェント設定、診断、更新を支援します。",
+      "source": "./plugins/lark-agent-bridge",
+      "category": "productivity"
+    }
+  ]
+}

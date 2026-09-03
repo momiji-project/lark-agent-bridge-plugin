@@ -1,0 +1,40 @@
+name: Upstream Bridge Watch
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 0 * * 1'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.12.0'
+      - name: Compare tested and latest versions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tested="$(node -p "require('./plugins/lark-agent-bridge/compatibility.json').bridge.testedVersion")"
+          latest="$(npm view lark-channel-bridge version)"
+          if [ "$tested" = "$latest" ]; then
+            echo "Already tested with latest Bridge: $latest"
+            exit 0
+          fi
+          title="Test lark-channel-bridge $latest compatibility"
+          existing="$(gh issue list --state open --search "$title in:title" --json number --jq 'length')"
+          if [ "$existing" -gt 0 ]; then
+            echo "Compatibility issue already exists."
+            exit 0
+          fi
+          gh label create upstream --color 1D76DB --description 'Upstream dependency update' --force
+          gh issue create \
+            --title "$title" \
+            --label upstream \
+            --body "The plugin is tested with **$tested**, while npm reports **$latest**. Run the cross-platform test matrix before updating compatibility.json. Do not auto-upgrade user installations until validation passes."

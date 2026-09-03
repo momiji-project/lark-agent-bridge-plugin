@@ -1,0 +1,39 @@
+name: 不具合報告
+description: Lark Agent Bridge Pluginの再現可能な不具合を報告します
+title: '[Bug] '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: 秘密情報、App Secret、token、実ユーザーIDを貼らないでください。
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+    validations:
+      required: true
+  - type: input
+    id: bridge-version
+    attributes:
+      label: lark-channel-bridge version
+    validations:
+      required: true
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Agent
+      options: [Claude Code, Codex]
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 症状と再現手順
+      description: 秘密情報を伏せて記載してください。
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Doctor出力
+      description: redacted済みの出力だけを貼ってください。
