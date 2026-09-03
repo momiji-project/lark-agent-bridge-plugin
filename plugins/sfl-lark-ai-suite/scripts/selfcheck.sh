@@ -27,9 +27,9 @@ else
 fi
 
 if node "$SCRIPT_DIR/gijiroku-config.mjs" validate >/dev/null 2>&1; then
-  printf 'OK   画像議事録設定\n'
+  printf 'OK   議事録設定（Larkドキュメント＋画像）\n'
 else
-  printf 'WARN 画像議事録設定が未完了または不正です。gijiroku-image-setup を実行してください\n'
+  printf 'WARN 議事録設定が未完了または不正です。gijiroku-image-setup を実行してください\n'
 fi
 
 if [[ "${LARK_CHANNEL:-}" == "1" ]]; then

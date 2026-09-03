@@ -9,7 +9,7 @@ const APP_NAME = "gijiroku-image-bridge";
 const SUMMARY_VALUES = new Set(["short", "standard", "detailed"]);
 const STYLE_VALUES = new Set(["auto", "fixed", "per-run"]);
 const LOGO_VALUES = new Set(["none", "always"]);
-const TRIGGER_VALUES = new Set(["explicit-image", "broad"]);
+const TRIGGER_VALUES = new Set(["explicit-minutes", "broad"]);
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
 const REPEATABLE_OPTIONS = new Set(["style-reference", "trigger-phrase"]);
 
@@ -50,12 +50,28 @@ function paths(profile) {
 async function readConfig(configPath) {
   try {
     const config = JSON.parse(await readFile(configPath, "utf8"));
-    if (config?.schemaVersion === 1) {
+    if (config?.schemaVersion === 1 || config?.schemaVersion === 2) {
+      const previousOutput = config.output || {};
       return {
         ...config,
-        schemaVersion: 2,
-        styleReferences: [],
-        trigger: { mode: "explicit-image", phrases: [] },
+        schemaVersion: 3,
+        styleReferences: Array.isArray(config.styleReferences) ? config.styleReferences : [],
+        trigger: {
+          mode: config.trigger?.mode === "broad" ? "broad" : "explicit-minutes",
+          phrases: Array.isArray(config.trigger?.phrases) ? config.trigger.phrases : [],
+        },
+        output: {
+          document: {
+            enabled: true,
+            parentToken: previousOutput.document?.parentToken || null,
+            parentPosition: previousOutput.document?.parentPosition || "my_library",
+          },
+          images: {
+            enabled: true,
+            format: previousOutput.images?.format || previousOutput.format || "png",
+            retentionDays: previousOutput.images?.retentionDays || previousOutput.retentionDays || 7,
+          },
+        },
       };
     }
     return config;
@@ -73,7 +89,7 @@ async function sha256(filePath) {
 function validateConfig(config) {
   const errors = [];
   if (!config || typeof config !== "object") return ["設定JSONがオブジェクトではありません"];
-  if (config.schemaVersion !== 2) errors.push("schemaVersionは2である必要があります");
+  if (config.schemaVersion !== 3) errors.push("schemaVersionは3である必要があります");
   if (!SUMMARY_VALUES.has(config.summaryDepth)) errors.push("summaryDepthが不正です");
   if (!STYLE_VALUES.has(config.styleMode)) errors.push("styleModeが不正です");
   if (!Array.isArray(config.styleReferences)) errors.push("styleReferencesは配列である必要があります");
@@ -91,6 +107,16 @@ function validateConfig(config) {
   if (!TRIGGER_VALUES.has(config.trigger?.mode)) errors.push("trigger.modeが不正です");
   if (!Array.isArray(config.trigger?.phrases)) errors.push("trigger.phrasesは配列である必要があります");
   if (Array.isArray(config.trigger?.phrases) && config.trigger.phrases.length > 10) errors.push("trigger.phrasesは最大10件です");
+  if (config.output?.document?.enabled !== true) errors.push("Larkドキュメント出力は有効である必要があります");
+  if (config.output?.document?.parentToken !== null && typeof config.output?.document?.parentToken !== "string") {
+    errors.push("document.parentTokenが不正です");
+  }
+  if (config.output?.document?.parentPosition !== "my_library") errors.push("document.parentPositionが不正です");
+  if (config.output?.images?.enabled !== true) errors.push("画像出力は有効である必要があります");
+  if (config.output?.images?.format !== "png") errors.push("images.formatはpngである必要があります");
+  if (!Number.isInteger(config.output?.images?.retentionDays) || config.output.images.retentionDays < 1) {
+    errors.push("images.retentionDaysが不正です");
+  }
   return errors;
 }
 
@@ -125,7 +151,8 @@ async function setConfig(args) {
   const stylePrompt = args["style-prompt"] || "";
   const styleReferenceSources = repeatedValues(args, "style-reference");
   const logoMode = args["logo-mode"];
-  const triggerMode = args["trigger-mode"] || "explicit-image";
+  const triggerMode = args["trigger-mode"] || "explicit-minutes";
+  const requestedDocumentParentToken = args["document-parent-token"]?.trim() || null;
   const triggerPhrases = [...new Set(repeatedValues(args, "trigger-phrase").map((value) => value.trim()).filter(Boolean))];
   if (!SUMMARY_VALUES.has(summaryDepth)) throw new Error("--summary は short|standard|detailed から選んでください");
   if (!STYLE_VALUES.has(styleMode)) throw new Error("--style-mode は auto|fixed|per-run から選んでください");
@@ -135,7 +162,7 @@ async function setConfig(args) {
   }
   if (styleReferenceSources.length > 3) throw new Error("--style-reference は最大3件です");
   if (!LOGO_VALUES.has(logoMode)) throw new Error("--logo-mode は none|always から選んでください");
-  if (!TRIGGER_VALUES.has(triggerMode)) throw new Error("--trigger-mode は explicit-image|broad から選んでください");
+  if (!TRIGGER_VALUES.has(triggerMode)) throw new Error("--trigger-mode は explicit-minutes|broad から選んでください");
   if (triggerPhrases.length > 10) throw new Error("--trigger-phrase は最大10件です");
   for (const phrase of triggerPhrases) {
     if (phrase.length > 120) throw new Error("--trigger-phrase は1件120文字以内にしてください");
@@ -161,9 +188,10 @@ async function setConfig(args) {
   }
 
   const current = await readConfig(destination.config);
+  const documentParentToken = requestedDocumentParentToken || current?.output?.document?.parentToken || null;
   const now = new Date().toISOString();
   const config = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     profile,
     summaryDepth,
     styleMode,
@@ -171,7 +199,10 @@ async function setConfig(args) {
     styleReferences,
     logo,
     trigger: { mode: triggerMode, phrases: triggerPhrases },
-    output: { format: "png", retentionDays: 7 },
+    output: {
+      document: { enabled: true, parentToken: documentParentToken, parentPosition: "my_library" },
+      images: { enabled: true, format: "png", retentionDays: 7 },
+    },
     createdAt: current?.createdAt || now,
     updatedAt: now
   };

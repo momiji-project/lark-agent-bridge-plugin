@@ -30,11 +30,11 @@ lark-cli minutes +search --owner-ids me --page-size 10 --format json --as user
 
 BridgeはLark IMの本文をAIへ渡す入口であり、このプラグイン専用のキーワード監視は追加しない。Skillの説明と設定の `trigger` を使い、依頼の意味で起動を判断する。
 
-- `trigger.mode=explicit-image`: 「画像」「ビジュアル」「インフォグラフィック」「見える化」など画像化の意図がある依頼で実行する。
-- `trigger.mode=broad`: 「議事録を作って」「Minutesをまとめて」など一般的な議事録依頼も画像議事録として扱う。
+- `trigger.mode=explicit-minutes`: 「議事録を作って」「Minutesから議事録を作って」など、議事録作成の意図が明確な依頼で実行する。
+- `trigger.mode=broad`: 「最新の妙記をまとめて」のような広い要約依頼も議事録作成として扱う。
 - `trigger.phrases`: 完全一致条件ではなく、ユーザーが普段使う依頼表現の補助例として解釈する。
 
-明示されたMinutes URL、日付、タイトル、要約量などは通常の自然言語引数として抽出する。登録外の自然な言い換えでも意味が同じなら受け付ける。画像議事録か文書議事録か判別できない場合だけ、一度確認する。
+明示されたMinutes URL、日付、タイトル、要約量などは通常の自然言語引数として抽出する。登録外の自然な言い換えでも意味が同じなら受け付ける。形式指定がなければLarkドキュメントと画像を両方作り、片方だけを明示された場合だけその指定を優先する。
 
 ## 3. 逐字稿を取得
 
@@ -86,9 +86,35 @@ python3 <plugin-root>/scripts/render_minutes.py \
 
 出力JSONの `files` にある全PNGを画像として目視確認する。
 
-## 7. Larkへ返信
+## 7. Larkドキュメントを作成
 
-`<bridge_context>.source` が `im` で、`messageIds` がある場合だけ実行する。返信先は配列末尾のメッセージID。ユーザーがそのメッセージで画像議事録を依頼したことを返信承認として扱い、別チャットへは送らない。
+同じ `summary.json` からLarkドキュメントを作る。別の要約を生成し直さない。`lark-doc` Skillの作成ワークフローに従い、議事録に適した `presentation_mode=normal` のPresentation Decisionでタスク専用草稿領域を初期化する。
+
+草稿領域で次を実行し、返された `draft_path` へXMLを生成する。
+
+```bash
+python3 <plugin-root>/scripts/render_minutes_document.py \
+  --input <run-dir>/summary.json \
+  --output <work-dir>/<draft-path>
+
+lark-cli docs +script --command parse \
+  --content "@./<draft-path>" --format json
+```
+
+`data.assessment.status` が合格した場合だけ文書を作成する。設定の `output.document.parentToken` がある場合は `--parent-token`、ない場合は `--parent-position my_library` を使う。
+
+```bash
+lark-cli docs +create --doc-format xml \
+  --content "@./<draft-path>" \
+  --parent-position my_library \
+  --as user
+```
+
+作成結果のwarningを確認し、`lark-cli docs +fetch --doc <document_id> --detail with-ids --as user` で本文を回収確認する。作成済み結果はrun領域へ `document-result.json` として保存し、再実行時は有効なURLを再利用して文書を重複作成しない。文書作成用の草稿領域は `lark-doc` Skillの手順で正確に削除する。
+
+## 8. Larkへ返信
+
+`<bridge_context>.source` が `im` で、`messageIds` がある場合だけ実行する。返信先は配列末尾のメッセージID。ユーザーがそのメッセージで議事録を依頼したことを、依頼元への返信承認と文書作成承認として扱い、別チャットへは送らない。
 
 同梱スクリプトを使ってbot返信する。スクリプトは画像ディレクトリへ移動して相対パスで送信し、message ID・Minutes token・画像内容から作ったハッシュだけを台帳へ保存する。同じ画像の二重返信は自動で抑止される。
 
@@ -99,10 +125,10 @@ node <plugin-root>/scripts/deliver-image.mjs \
   --image ./output/page-01.png
 ```
 
-全ページについて同じコマンドを繰り返す。トピック内の依頼は `--reply-in-thread` も付ける。送信が一部失敗した場合、成功済みページを再送せず失敗ページから再開する。
+全ページについて同じコマンドを繰り返す。トピック内の依頼は `--reply-in-thread` も付ける。送信が一部失敗した場合、成功済みページを再送せず失敗ページから再開する。Bridgeの最終返答には作成したLarkドキュメントのURLを含める。
 
-## 8. 後片付け
+## 9. 後片付け
 
-全ページ送信成功後、`source/`、`summary.json`、`background.png` を削除する。`output/` の最終PNGは既定7日間保持する。ログや最終返答に逐字稿本文、token、秘密値を残さない。
+文書URLと全ページの返信成功後、`source/`、`summary.json`、`background.png` を削除する。`output/` の最終PNGは既定7日間保持する。`document-result.json` には文書のID、URL、作成時刻だけを保存し、Minutes token、逐字稿本文、秘密値を残さない。
 
 失敗時は調査に必要な最小限の一時ファイルを残し、保存場所と再開手順をユーザーへ知らせる。

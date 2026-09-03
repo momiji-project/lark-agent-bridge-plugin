@@ -1,6 +1,6 @@
 interface:
-  display_name: "画像議事録を作成"
-  short_description: "Lark Minutesを設定済みデザインの画像議事録にする"
-  default_prompt: "Use $gijiroku-image to turn my latest Lark Minutes into image-based meeting minutes."
+  display_name: "議事録を作成"
+  short_description: "Lark Minutesからドキュメントと共有用画像を作る"
+  default_prompt: "$gijiroku-image を使って、最新のLark Minutesからドキュメントと共有用画像の議事録を作ってください。"
 policy:
   allow_implicit_invocation: true

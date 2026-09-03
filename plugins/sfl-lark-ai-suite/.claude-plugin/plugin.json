@@ -1,7 +1,7 @@
 {
   "name": "sfl-lark-ai-suite",
-  "version": "0.1.0",
-  "description": "Lark接続とMinutes画像議事録を一つにまとめて導入・設定するプラグイン",
+  "version": "0.2.0",
+  "description": "Lark接続と、Minutesからドキュメント・共有用画像を作る議事録機能を一つにまとめて導入・設定するプラグイン",
   "author": {
     "name": "Salon Flow Love"
   },

@@ -1,11 +1,11 @@
 ---
 name: gijiroku-image-setup
-description: Lark Minutes画像議事録プラグインの初回設定または再設定を対話形式で行う。ユーザーが画像議事録Bridgeを導入・セットアップしたい、要約量、画像テイスト、参考画像、ロゴ、Lark IMでの自然言語トリガーを変更したい、または設定を確認したいと言ったときに使う。
+description: Lark Minutes議事録プラグインの初回設定または再設定を対話形式で行う。Larkドキュメントと共有用画像をセットで出力し、要約量、画像テイスト、参考画像、ロゴ、保存先、Lark IMでの自然言語トリガーを設定したいときに使う。内部名は既存環境との互換性のため維持する。
 ---
 
-# 画像議事録 Bridge セットアップ
+# 議事録 Bridge セットアップ
 
-既存の `lark-channel-bridge` がLark IMとAIを接続済みであることを前提に、画像議事録の個人設定だけを行う。Bridge本体、LaunchAgent、Cloudflare、既存プラグインの設定は変更しない。
+既存の `lark-channel-bridge` がLark IMとAIを接続済みであることを前提に、議事録の個人設定だけを行う。標準出力はLarkドキュメントと共有用画像の両方。Bridge本体、LaunchAgent、Cloudflare、既存プラグインの設定は変更しない。
 
 ## 絶対ルール
 
@@ -28,14 +28,16 @@ description: Lark Minutes画像議事録プラグインの初回設定または�
 - 要約量: `standard`
 - 画像テイスト: `auto`
 - ロゴ: `none`
-- 起動範囲: `explicit-image`
+- Larkドキュメント: 有効（保存先はMy Space）
+- 共有用画像: 有効
+- 起動範囲: `explicit-minutes`
 
 ```bash
 node <plugin-root>/scripts/gijiroku-config.mjs set \
   --summary standard \
   --style-mode auto \
   --logo-mode none \
-  --trigger-mode explicit-image
+  --trigger-mode explicit-minutes
 ```
 
 保存後は「7. 動作確認」へ進む。既存の正常な設定がある場合は上書きせず、現在値を保持するかだけ確認する。
@@ -88,10 +90,12 @@ node <plugin-root>/scripts/gijiroku-config.mjs show
 
 自然言語で起動でき、スラッシュコマンドは不要であることを説明して次の2択から選んでもらう。
 
-- `explicit-image`（推奨）: 「画像議事録を作って」「このMinutesをビジュアル化して」など、画像化の意図がある依頼だけで起動する。既存の文書議事録Skillと衝突しにくい。
-- `broad`: 「議事録を作って」「最新の妙記をまとめて」など、一般的な議事録依頼も画像議事録として扱う。
+- `explicit-minutes`（推奨）: 「議事録を作って」「Minutesから議事録を作って」など、議事録作成の意図が明確な依頼で起動する。
+- `broad`: 「最新の妙記をまとめて」など、広い要約依頼も議事録作成として扱う。
 
 続けて、普段使いたい言い方を追加登録するか一度だけ聞く。登録する文言は最大10件で、「議事録」「Minutes」「妙記」のいずれかを含む自然な依頼文にする。これは完全一致キーワードではなく、意味判定の補助例として保存する。
+
+Larkドキュメントは既定で利用者のMy Spaceへ作成する。ユーザーが別のLarkフォルダを明示した場合だけ、そのfolder tokenを `--document-parent-token` で保存する。追加質問を増やすため、保存先を毎回は聞かない。
 
 ### 6. 確認後に保存
 
@@ -102,7 +106,7 @@ node <plugin-root>/scripts/gijiroku-config.mjs set \
   --summary standard \
   --style-mode auto \
   --logo-mode none \
-  --trigger-mode explicit-image
+  --trigger-mode explicit-minutes
 ```
 
 固定スタイルと追加の呼び方を保存する例:
@@ -116,7 +120,7 @@ node <plugin-root>/scripts/gijiroku-config.mjs set \
   --style-reference /path/to/reference-02.jpg \
   --logo-mode always \
   --logo-source /path/to/logo.png \
-  --trigger-mode explicit-image \
+  --trigger-mode explicit-minutes \
   --trigger-phrase "最新のMinutesを一枚で見える化して"
 ```
 
@@ -134,4 +138,4 @@ Bridge実行中は `LARK_CHANNEL_PROFILE` が自動的に設定プロファイ�
 2. 返されたURLを改変せず提示し、QRコードも生成する。
 3. ユーザーが承認完了を伝えた次のターンで `lark-cli auth login --device-code <device_code>` をAI自身が実行する。
 
-セットアップ完了時は、選んだ起動範囲と登録した言い方に沿った依頼例を2つ示す。Bridge側の追加設定は不要で、次のLarkメッセージから利用できると案内する。
+セットアップ完了時は、Larkドキュメントと共有用画像が両方返ること、選んだ起動範囲、登録した言い方に沿った依頼例を2つ示す。Bridge側の追加設定は不要で、次のLarkメッセージから利用できると案内する。

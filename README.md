@@ -1,6 +1,6 @@
 # SFL Lark AI Plugins
 
-Lark / Feishu からローカルの Claude CodeまたはCodexを使うBridge単体版と、画像議事録まで一つにまとめた統合版を配布します。新規導入では `sfl-lark-ai-suite` を推奨します。
+Lark / Feishu からローカルの Claude CodeまたはCodexを使うBridge単体版と、ドキュメント・共有用画像の議事録まで一つにまとめた統合版を配布します。新規導入では `sfl-lark-ai-suite` を推奨します。
 
 ## 推奨: 統合版を一括導入
 
@@ -13,10 +13,10 @@ codex plugin marketplace add momiji-project/lark-agent-bridge-plugin --ref main 
 新しいセッションで次のように依頼します。
 
 ```text
-$sfl-lark-setup Bridgeと画像議事録をおすすめ設定で一括導入してください
+$sfl-lark-setup Bridgeと議事録をおすすめ設定で一括導入してください
 ```
 
-おすすめ一括設定では、Bridgeを `safe-edit`、画像議事録を「標準要約・テイスト自動・ロゴなし・画像化明示トリガー」で開始します。既存の正常な設定は上書きしません。ロゴや固定デザインは導入後に `gijiroku-image-setup` で追加できます。
+おすすめ一括設定では、Bridgeを `safe-edit`、議事録を「標準要約・Larkドキュメント＋共有用画像・テイスト自動・ロゴなし・議事録依頼の明示トリガー」で開始します。既存の正常な設定は上書きしません。ロゴや固定デザインは導入後に `gijiroku-image-setup` で追加できます。
 
 📘 [SFL Lark AI Suite 導入ガイド](https://sfl-lark-ai-bridge-guide.pages.dev/)
 

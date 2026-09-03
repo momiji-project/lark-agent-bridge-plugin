@@ -5,6 +5,7 @@
 ```json
 {
   "title": "会議の正式タイトル",
+  "source_url": "元のMinutes URL。取得できない場合は空文字",
   "meeting_date": "YYYY-MM-DD または記載なし",
   "participants": ["氏名"],
   "summary_depth": "short | standard | detailed",

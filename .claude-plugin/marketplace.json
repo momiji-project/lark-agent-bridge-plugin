@@ -15,7 +15,7 @@
     },
     {
       "name": "sfl-lark-ai-suite",
-      "description": "Bridge接続とLark Minutes画像議事録を一つにまとめて導入・設定します。",
+      "description": "Bridge接続と、Lark Minutesからドキュメント・共有用画像を作る議事録機能を一つにまとめて導入・設定します。",
       "source": "./plugins/sfl-lark-ai-suite",
       "category": "productivity"
     }
