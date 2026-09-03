@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Lark Agent Bridge Pluginの導入方法、Lark Developer設定、Claude Code/Codexとの接続、安全設計を日本語で解説します。"
+    />
+    <meta name="theme-color" content="#101827" />
+    <meta property="og:title" content="Lark Agent Bridge — 導入ガイド" />
+    <meta
+      property="og:description"
+      content="LarkからClaude Code / Codexへ。QR登録から安全な運用まで、迷わず導入できる日本語ガイド。"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://momiji-project.github.io/lark-agent-bridge-plugin/" />
+    <meta property="og:image" content="https://momiji-project.github.io/lark-agent-bridge-plugin/sfl-logo.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Lark Agent Bridge — 導入ガイド" />
+    <meta
+      name="twitter:description"
+      content="LarkからClaude Code / Codexへ。QR登録から安全な運用まで、迷わず導入できる日本語ガイド。"
+    />
+    <meta name="twitter:image" content="https://momiji-project.github.io/lark-agent-bridge-plugin/sfl-logo.png" />
+    <title>Lark Agent Bridge — 導入ガイド</title>
+    <link rel="canonical" href="https://momiji-project.github.io/lark-agent-bridge-plugin/" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" defer></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "TechArticle",
+        "headline": "Lark Agent Bridge 導入ガイド",
+        "description": "Lark Agent Bridge Pluginの導入方法、Lark Developer設定、Claude Code/Codexとの接続、安全設計を解説します。",
+        "inLanguage": "ja",
+        "url": "https://momiji-project.github.io/lark-agent-bridge-plugin/",
+        "author": { "@type": "Organization", "name": "SFL / MOMIJI Project" },
+        "about": ["Lark", "Claude Code", "Codex", "AI Agent Bridge"]
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">本文へ移動</a>
+
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Lark Agent Bridge ホーム">
+        <img class="brand-logo" src="./sfl-logo.png" alt="SFL" width="42" height="42" />
+        <span>
+          <strong>Lark Agent Bridge</strong>
+          <small>SFL · Setup &amp; Operations Plugin</small>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="ページ内ナビゲーション">
+        <a href="#developer">Lark Developer</a>
+        <a href="#install">導入</a>
+        <a href="#security">安全設計</a>
+        <a class="nav-github" href="https://github.com/momiji-project/lark-agent-bridge-plugin">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top">
+        <div class="hero-title-row">
+          <div class="hero-copy">
+            <p class="eyebrow"><span></span> SFL OPEN SOURCE · v0.1.0</p>
+            <h1>Larkを、<em>AIエージェントの入口</em>に。</h1>
+          </div>
+          <div class="hero-summary">
+            <p>
+              Claude CodeとCodexを、Larkのチャットから安全に操作するための導入プラグインです。
+              Skillが環境診断から設定まで案内し、LarkアプリはQRコードで登録できます。
+            </p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="#install">5分で導入する</a>
+              <a class="button button-secondary" href="#developer">Developer設定を見る</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="quick-path" aria-label="導入の3ステップ">
+          <article>
+            <span class="quick-number">01</span>
+            <div><small>INSTALL</small><strong>プラグインを追加</strong><p>Codex / Claude CodeにGitHubから導入。</p></div>
+          </article>
+          <article>
+            <span class="quick-number">02</span>
+            <div><small>AUTHORIZE</small><strong>QRをLarkで承認</strong><p>PersonalAgentを公式フローで登録。</p></div>
+          </article>
+          <article>
+            <span class="quick-number">03</span>
+            <div><small>CONNECT</small><strong><code>/status</code> で確認</strong><p>ローカルBridgeとの長接続を確認。</p></div>
+          </article>
+          <aside>
+            <span class="safe-dot"></span>
+            <div><small>DEFAULT POLICY</small><strong>Owner only · safe-edit</strong></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section architecture" aria-labelledby="architecture-title">
+        <div class="section-heading compact">
+          <p class="kicker">HOW IT WORKS</p>
+          <h2 id="architecture-title">会話はLark、実行はローカルPC</h2>
+          <p>コードとエージェントの実行環境はPC側に残り、BridgeがLarkとのメッセージを中継します。</p>
+        </div>
+        <div class="flow" role="img" aria-label="LarkからPersonalAgent、WebSocket、ローカルBridge、Claude CodeまたはCodex、プロジェクトへ接続する流れ">
+          <article class="flow-node cloud-node">
+            <span class="node-tag">LARK CLOUD</span>
+            <strong>Lark Chat</strong>
+            <small>DM / グループ / コメント</small>
+          </article>
+          <span class="flow-arrow"><b>1</b><i></i><small>メッセージ</small></span>
+          <article class="flow-node cloud-node">
+            <span class="node-tag">PERSONAL AGENT</span>
+            <strong>Lark App</strong>
+            <small>Bot・認証・アクセス</small>
+          </article>
+          <span class="flow-arrow boundary"><b>2</b><i></i><small>WebSocket</small></span>
+          <article class="flow-node local-node">
+            <span class="node-tag">LOCAL PC</span>
+            <strong>Bridge</strong>
+            <small>セッション・権限・変換</small>
+          </article>
+          <span class="flow-arrow"><b>3</b><i></i><small>CLI実行</small></span>
+          <article class="flow-node agent-node">
+            <span class="node-tag">YOUR AGENT</span>
+            <strong>Claude / Codex</strong>
+            <small>指定workspaceで作業</small>
+          </article>
+        </div>
+        <div class="architecture-note">
+          <strong>公開Webhookは不要です。</strong>
+          <span>BridgeはLarkの長接続を利用するため、通常は固定IP・公開サーバー・SSL証明書を用意しません。</span>
+        </div>
+      </section>
+
+      <section class="section developer-section" id="developer" aria-labelledby="developer-title">
+        <div class="section-heading">
+          <p class="kicker">LARK DEVELOPER</p>
+          <h2 id="developer-title">Developer設定は、ほぼQR登録で完了</h2>
+          <p>
+            推奨ルートでは、Lark公式Node SDKの一括アプリ登録を使います。Developer Consoleで最初から
+            App ID・権限・イベントを一つずつ設定する流れではありません。
+          </p>
+        </div>
+
+        <div class="route-selector" role="tablist" aria-label="Larkアプリの登録方法">
+          <button id="tab-qr" class="route-tab active" type="button" role="tab" aria-selected="true" aria-controls="panel-qr" data-route="qr">
+            <span>推奨</span> QRで新規登録
+          </button>
+          <button id="tab-existing" class="route-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-existing" data-route="existing">
+            既存アプリを利用
+          </button>
+        </div>
+
+        <div id="panel-qr" class="route-panel active" role="tabpanel" aria-labelledby="tab-qr">
+          <ol class="timeline">
+            <li>
+              <span>01</span>
+              <div><strong>Skillが登録フローを開始</strong><p>PCのターミナルまたはローカル管理画面に、期限付きQRコードを表示します。</p></div>
+            </li>
+            <li>
+              <span>02</span>
+              <div><strong>Larkアプリでスキャン</strong><p>サインイン済みのLarkでPersonalAgentの作成・利用を確認し、本人が承認します。</p></div>
+            </li>
+            <li>
+              <span>03</span>
+              <div><strong>Lark側でアプリを登録</strong><p>OAuth 2.0 Device Authorization Grantを使い、Larkがアプリを作成して認証情報を返します。</p></div>
+            </li>
+            <li>
+              <span>04</span>
+              <div><strong>Bridgeが安全に保存</strong><p>App Secretは会話へ表示せず、プロファイル単位の暗号化ストアへ保存します。</p></div>
+            </li>
+            <li>
+              <span>05</span>
+              <div><strong>接続して動作確認</strong><p>長接続でLarkに接続し、LarkのBotへ <code>/status</code> を送って完了です。</p></div>
+            </li>
+          </ol>
+
+          <aside class="callout success-callout">
+            <span aria-hidden="true">✓</span>
+            <div>
+              <strong>通常はDeveloper Consoleを開かなくて大丈夫</strong>
+              <p>利用者が行うのはQRスキャンと承認です。App Secretをコピーしてチャットへ貼る必要もありません。</p>
+            </div>
+          </aside>
+        </div>
+
+        <div id="panel-existing" class="route-panel" role="tabpanel" aria-labelledby="tab-existing" hidden>
+          <div class="existing-grid">
+            <article>
+              <span class="step-number">01</span>
+              <h3>PersonalAgentアプリを用意</h3>
+              <p>Lark Developer Consoleで管理中のアプリを使えます。Bot機能、利用範囲、必要な権限とイベントが有効であることを確認します。</p>
+            </article>
+            <article>
+              <span class="step-number">02</span>
+              <h3>App IDを指定</h3>
+              <p>初期設定時に既存のApp IDを選択します。Lark国際版ではtenantをLarkに設定します。</p>
+            </article>
+            <article>
+              <span class="step-number">03</span>
+              <h3>Secretは対話入力</h3>
+              <p>共有画面やシェル履歴に残さないため、App Secretは非表示の対話プロンプトで入力します。</p>
+            </article>
+          </div>
+          <aside class="callout warning-callout">
+            <span aria-hidden="true">!</span>
+            <div>
+              <strong>既存アプリ方式だけはDeveloper側の管理が必要</strong>
+              <p>プラグインはDeveloper Consoleの設定を勝手に変更しません。追加機能の権限は、Lark側の承認画面で管理します。</p>
+            </div>
+          </aside>
+        </div>
+
+        <div class="responsibility-table" aria-label="自動化される作業と利用者が行う作業">
+          <div class="table-header"><span>設定項目</span><span>担当</span><span>内容</span></div>
+          <div><span>動作環境チェック</span><strong class="badge auto">自動</strong><span>Node.js・Bridge・Claude/Codexを診断</span></div>
+          <div><span>Larkアプリ作成</span><strong class="badge approve">QR承認</strong><span>公式SDKが作成、利用者がスマホで承認</span></div>
+          <div><span>App Secret保存</span><strong class="badge auto">自動</strong><span>プロファイル別の暗号化ストアへ保存</span></div>
+          <div><span>Developer Console</span><strong class="badge optional">通常不要</strong><span>既存アプリ利用・高度な権限追加時のみ</span></div>
+          <div><span>AIエージェント認証</span><strong class="badge manual">本人操作</strong><span>Claude CodeまたはCodexへログイン</span></div>
+          <div><span>高権限モード</span><strong class="badge manual">明示承認</strong><span><code>full</code> は自動選択しない</span></div>
+        </div>
+      </section>
+
+      <section class="section install-section" id="install" aria-labelledby="install-title">
+        <div class="section-heading">
+          <p class="kicker">INSTALL</p>
+          <h2 id="install-title">エージェントを選んで導入</h2>
+          <p>プラグインを追加したら、初期設定Skillに任せられます。</p>
+        </div>
+
+        <div class="install-card">
+          <div class="install-tabs" role="tablist" aria-label="インストール先">
+            <button id="install-tab-codex" class="install-tab active" role="tab" aria-selected="true" aria-controls="install-panel-codex" data-install="codex">Codex</button>
+            <button id="install-tab-claude" class="install-tab" role="tab" aria-selected="false" aria-controls="install-panel-claude" data-install="claude">Claude Code</button>
+          </div>
+          <div id="install-panel-codex" class="install-panel active" role="tabpanel" aria-labelledby="install-tab-codex">
+            <div class="code-block">
+              <button class="copy-button" type="button" data-copy="codex-code">コピー</button>
+              <pre id="codex-code"><code>codex plugin marketplace add momiji-project/lark-agent-bridge-plugin --ref main
+codex plugin add lark-agent-bridge@momiji-lark-tools</code></pre>
+            </div>
+            <p class="run-prompt"><span>次に依頼</span><code>$lark-bridge-setup Lark BridgeをこのPCに設定してください</code></p>
+          </div>
+          <div id="install-panel-claude" class="install-panel" role="tabpanel" aria-labelledby="install-tab-claude" hidden>
+            <div class="code-block">
+              <button class="copy-button" type="button" data-copy="claude-code">コピー</button>
+              <pre id="claude-code"><code>/plugin marketplace add momiji-project/lark-agent-bridge-plugin
+/plugin install lark-agent-bridge@momiji-lark-tools</code></pre>
+            </div>
+            <p class="run-prompt"><span>次に依頼</span><code>/lark-bridge-setup Lark BridgeをこのPCに設定してください</code></p>
+          </div>
+        </div>
+
+        <div class="skills-grid">
+          <article><span>SETUP</span><h3>初回導入</h3><code>lark-bridge-setup</code><p>QR登録、プロファイル作成、疎通確認まで。</p></article>
+          <article><span>DOCTOR</span><h3>状態診断</h3><code>lark-bridge-doctor</code><p>設定を変更せず、接続と構成を点検。</p></article>
+          <article><span>CONFIG</span><h3>エージェント設定</h3><code>lark-bridge-agent-config</code><p>権限、workspace、継続ルールを管理。</p></article>
+          <article><span>UPDATE</span><h3>安全な更新</h3><code>lark-bridge-update</code><p>稼働状態と秘密情報を維持して更新。</p></article>
+        </div>
+      </section>
+
+      <section class="section security-section" id="security" aria-labelledby="security-title">
+        <div class="section-heading inverse">
+          <p class="kicker">SECURITY BY DEFAULT</p>
+          <h2 id="security-title">最初から、広げすぎない</h2>
+          <p>便利さより先に、誰が・どこまで・何を実行できるかを固定します。</p>
+        </div>
+        <div class="security-grid">
+          <article><span>01</span><h3>Owner only</h3><p>新規Botは作成者だけが利用可能。他ユーザーは明示的に招待します。</p></article>
+          <article><span>02</span><h3>Safe edit</h3><p>既定は指定workspace内だけを編集。PC全体へのアクセスは許可しません。</p></article>
+          <article><span>03</span><h3>Encrypted secret</h3><p>App Secretをリポジトリ、設定プリセット、会話ログへ含めません。</p></article>
+          <article><span>04</span><h3>No surprise restart</h3><p>更新前に停止していたプロファイルを、更新後に勝手に起動しません。</p></article>
+        </div>
+        <div class="permission-scale">
+          <div>
+            <span>安全</span>
+            <strong>read-only</strong>
+            <small>閲覧・調査</small>
+          </div>
+          <i></i>
+          <div class="recommended">
+            <span>推奨</span>
+            <strong>safe-edit</strong>
+            <small>workspace内の編集</small>
+          </div>
+          <i></i>
+          <div>
+            <span>要確認</span>
+            <strong>full</strong>
+            <small>ローカル全体</small>
+          </div>
+        </div>
+      </section>
+
+      <section class="section faq-section" aria-labelledby="faq-title">
+        <div class="section-heading compact">
+          <p class="kicker">FAQ</p>
+          <h2 id="faq-title">よくある確認</h2>
+        </div>
+        <div class="faq-list">
+          <details>
+            <summary>Developer Consoleで権限を全部設定する必要がありますか？</summary>
+            <p>推奨のQR登録では、最初からDeveloper Consoleでアプリを手作りする必要はありません。既存アプリを流用する場合や、通常より広い追加機能を有効にする場合だけLark側の管理が必要です。</p>
+          </details>
+          <details>
+            <summary>System / Developerプロンプトも自動設定されますか？</summary>
+            <p>製品本体のSystem / Developerメッセージは外部から置換しません。代わりにClaude Codeの <code>CLAUDE.md</code>、Codexの <code>AGENTS.md</code> へBridge専用の管理ブロックを追加します。既存の手書き部分は維持されます。</p>
+          </details>
+          <details>
+            <summary>グループ内の誰でもBotを使えますか？</summary>
+            <p>いいえ。初期状態ではアプリ作成者だけが利用できます。チームメンバーやグループを開放するときは、Lark内の <code>/invite</code> を使って明示的に追加します。</p>
+          </details>
+          <details>
+            <summary>PCの電源を切っても使えますか？</summary>
+            <p>BridgeとAIエージェントはローカルPCで動くため、PCが起動しネットワークに接続されている必要があります。公開サーバー上へコードを送る構成ではありません。</p>
+          </details>
+          <details>
+            <summary>公開サーバーやWebhook URLは必要ですか？</summary>
+            <p>通常は不要です。BridgeはLarkのWebSocket長接続を利用するため、固定IP、公開ドメイン、SSL証明書を準備せずに開始できます。</p>
+          </details>
+          <details>
+            <summary>App SecretはGitHubへ保存されますか？</summary>
+            <p>保存されません。SecretはリポジトリやSkillへ含めず、ローカルのプロファイル用ストアへ暗号化して保持します。既存アプリを使う場合も、コマンド引数やチャットへ貼り付けず対話入力します。</p>
+          </details>
+        </div>
+      </section>
+
+      <section class="cta-section">
+        <div>
+          <p class="kicker">READY TO CONNECT?</p>
+          <h2>Larkを、エージェントの入口に。</h2>
+          <p>導入、診断、権限設定、更新まで。チームで再利用できる形にまとめました。</p>
+        </div>
+        <a class="button button-light" href="https://github.com/momiji-project/lark-agent-bridge-plugin">GitHubで始める</a>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div>
+        <strong>Lark Agent Bridge</strong>
+        <p>Community plugin for safer local agent operations.</p>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/momiji-project/lark-agent-bridge-plugin">Plugin repository</a>
+        <a href="https://github.com/zarazhangrui/lark-coding-agent-bridge">Bridge upstream</a>
+        <a href="https://github.com/larksuite/node-sdk">Lark official Node SDK</a>
+      </div>
+      <p class="copyright">MIT License · MOMIJI Project</p>
+    </footer>
+  </body>
+</html>

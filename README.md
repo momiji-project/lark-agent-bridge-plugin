@@ -2,7 +2,9 @@
 
 Lark / Feishu からローカルの Claude Code または Codex を使うための、導入・設定・診断・更新プラグインです。
 
-Bridge本体は再実装せず、MITライセンスの [`lark-channel-bridge`](https://github.com/zarazhangrui/feishu-claude-code-bridge) を利用します。このリポジトリは、設定ファイルや秘密情報を手作業で編集せずに導入できる運用レイヤーを提供します。
+📘 [図解付きの導入ガイド（Lark Developer設定を含む）](https://momiji-project.github.io/lark-agent-bridge-plugin/)
+
+Bridge本体は再実装せず、MITライセンスの [`lark-channel-bridge`](https://github.com/zarazhangrui/lark-coding-agent-bridge) を利用します。このリポジトリは、設定ファイルや秘密情報を手作業で編集せずに導入できる運用レイヤーを提供します。
 
 ## できること
 
