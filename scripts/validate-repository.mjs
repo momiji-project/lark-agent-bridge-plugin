@@ -38,6 +38,8 @@ const claudeManifest = await readJson(join(pluginRoot, '.claude-plugin', 'plugin
 const compatibility = await readJson(join(pluginRoot, 'compatibility.json'))
 const codexMarketplace = await readJson(join(repositoryRoot, '.agents', 'plugins', 'marketplace.json'))
 const claudeMarketplace = await readJson(join(repositoryRoot, '.claude-plugin', 'marketplace.json'))
+const shellBootstrap = join(pluginRoot, 'scripts', 'bootstrap.sh')
+const windowsBootstrap = join(pluginRoot, 'scripts', 'bootstrap-windows.ps1')
 
 for (const manifest of [codexManifest, claudeManifest]) {
   requireValue(manifest?.name === 'lark-agent-bridge', 'plugin manifest name must be lark-agent-bridge')
@@ -49,6 +51,11 @@ requireValue(compatibility?.pluginVersion === codexManifest?.version, 'compatibi
 requireValue(compatibility?.bridge?.package === 'lark-channel-bridge', 'compatibility must use lark-channel-bridge')
 requireValue(codexMarketplace?.name === 'momiji-lark-tools', 'Codex marketplace name mismatch')
 requireValue(claudeMarketplace?.name === 'momiji-lark-tools', 'Claude marketplace name mismatch')
+
+const shellBootstrapStat = await lstat(shellBootstrap)
+requireValue(shellBootstrapStat.isFile(), 'macOS bootstrap must be a regular file')
+requireValue((shellBootstrapStat.mode & 0o111) !== 0, 'macOS bootstrap must be executable')
+requireValue((await lstat(windowsBootstrap)).isFile(), 'Windows bootstrap must be a regular file')
 
 const presetNames = ['read-only', 'safe-edit', 'full']
 for (const name of presetNames) {

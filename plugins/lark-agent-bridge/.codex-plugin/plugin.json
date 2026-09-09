@@ -1,6 +1,6 @@
 {
   "name": "lark-agent-bridge",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Install, configure, diagnose, and update lark-channel-bridge for Claude Code and Codex without hand-editing secrets or profile files.",
   "author": {
     "name": "momiji-project",

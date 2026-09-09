@@ -4,10 +4,10 @@ Lark / Feishu からローカルのClaude CodeまたはCodexを利用するた�
 
 ## 推奨: 土台と追加機能を分けて導入
 
-導入は次のゲートを順番に通します。OS、Node.js、npmのいずれかが不合格なら、その場で停止してBridgeや議事録Pluginを後追い導入しません。
+導入は次のゲートを順番に通します。Node.jsやnpmが無い場合もセットアップの途中で止めたままにせず、変更内容を説明して承認を得た後、OS別のブートストラップでNode.jsから整備します。前のゲートが完了するまでBridgeや議事録Pluginを後追い導入しません。
 
 1. macOS / Windows / LinuxとCPUアーキテクチャを判定
-2. Node.js 20.12以上とnpmを確認
+2. Node.js 20.12以上とnpmを確認し、必要ならセットアップ内でNode.js LTSを導入
 3. Lark公式CLI `@larksuite/cli` を確認・導入
 4. `lark-channel-bridge` を確認・導入
 5. Bridgeプロファイルを作成し、Lark IMの往復を確認
@@ -45,6 +45,7 @@ Bridge本体は再実装せず、Lark公式のChannel SDKを基盤にするMIT�
 ## できること
 
 - OSとCPU、Node.js、npm、Lark公式CLI、Claude Code、Codex、Bridgeの事前確認
+- WindowsとmacOSでNode.jsが無い初期状態から始めるOSネイティブのブートストラップ
 - Lark公式CLIをBridgeより先に導入する順序制御
 - Lark PersonalAgentのQR登録とプロファイル作成
 - `read-only` / `safe-edit` / `full` の権限プリセット
@@ -55,7 +56,7 @@ Bridge本体は再実装せず、Lark公式のChannel SDKを基盤にするMIT�
 
 ## 対応範囲
 
-Node.js 20.12以上が動作し、Claude CodeまたはCodex CLIがインストール済みのmacOS、Linux、Windowsを対象にします。LarkのQR認証、個人Larkデータを利用する場合のuser認証、各エージェントへのログインは利用者本人が行います。
+Claude CodeまたはCodex CLIがインストール済みのmacOS、Linux、Windowsを対象にします。WindowsとmacOSでは、Node.js 20.12以上とnpmが無い場合もセットアップSkillが診断し、明示承認後にNode.js LTSの導入から続行します。WindowsはWindows Package Manager、macOSはチェックサムと署名を検証したNode.js公式インストーラーを使用します。LarkのQR認証、macOSのインストーラー画面、個人Larkデータを利用する場合のuser認証、各エージェントへのログインは利用者本人が行います。
 
 ## Codexへインストール
 

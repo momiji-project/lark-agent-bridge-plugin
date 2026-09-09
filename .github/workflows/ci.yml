@@ -58,3 +58,16 @@ jobs:
           plugins/sfl-lark-ai-suite/tests/gijiroku-document.test.mjs
           plugins/sfl-gijiroku/tests/gijiroku-config.test.mjs
           plugins/sfl-gijiroku/tests/gijiroku-document.test.mjs
+      - name: Check Unix bootstrap
+        if: runner.os != 'Windows'
+        run: |
+          bash -n plugins/lark-agent-bridge/scripts/bootstrap.sh
+          bash plugins/lark-agent-bridge/scripts/bootstrap.sh --check-only
+          bash -n plugins/sfl-lark-ai-suite/scripts/bootstrap.sh
+          bash plugins/sfl-lark-ai-suite/scripts/bootstrap.sh --check-only
+      - name: Check Windows bootstrap
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File plugins/lark-agent-bridge/scripts/bootstrap-windows.ps1 -CheckOnly
+          powershell -NoProfile -ExecutionPolicy Bypass -File plugins/sfl-lark-ai-suite/scripts/bootstrap-windows.ps1 -CheckOnly
