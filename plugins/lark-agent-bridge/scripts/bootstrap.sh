@@ -6,14 +6,16 @@ MINIMUM_NODE_VERSION="20.12.0"
 NODE_RELEASE_LINE="22"
 CHECK_ONLY=0
 INSTALL_NODE_LTS=0
+RUNTIME_ONLY=0
 DRY_RUN=0
 
 usage() {
   cat <<'EOF'
-Usage: bash scripts/bootstrap.sh [--check-only] [--install-node-lts] [--dry-run]
+Usage: bash scripts/bootstrap.sh [--check-only] [--install-node-lts] [--runtime-only] [--dry-run]
 
   --check-only        Check Node.js and npm without changing the PC.
   --install-node-lts  Install Node.js 22 LTS when Node.js or npm is unavailable.
+  --runtime-only      Stop after checking or installing Node.js and npm.
   --dry-run           Show the planned installation without changing the PC.
 EOF
 }
@@ -22,6 +24,7 @@ for argument in "$@"; do
   case "$argument" in
     --check-only) CHECK_ONLY=1 ;;
     --install-node-lts) INSTALL_NODE_LTS=1 ;;
+    --runtime-only) RUNTIME_ONLY=1 ;;
     --dry-run) DRY_RUN=1 ;;
     -h|--help) usage; exit 0 ;;
     *) printf 'Unknown option: %s\n' "$argument" >&2; usage >&2; exit 2 ;;
@@ -155,7 +158,11 @@ if ! runtime_ready; then
     exit 20
   fi
   if [ "$DRY_RUN" -eq 1 ]; then
-    printf '[dry-run] Install the official Node.js %s LTS package, then install the official Lark CLI before lark-channel-bridge.\n' "$NODE_RELEASE_LINE"
+    if [ "$RUNTIME_ONLY" -eq 1 ]; then
+      printf '[dry-run] Install the official Node.js %s LTS package with npm, then stop before installing Lark CLI or Bridge.\n' "$NODE_RELEASE_LINE"
+    else
+      printf '[dry-run] Install the official Node.js %s LTS package, then install the official Lark CLI before lark-channel-bridge.\n' "$NODE_RELEASE_LINE"
+    fi
     exit 0
   fi
   if [ "$OS_NAME" != "Darwin" ]; then
@@ -171,6 +178,11 @@ if ! runtime_ready; then
     printf 'Node.js installation did not become available. Finish or reopen the installer, then rerun setup. No Bridge package was installed.\n' >&2
     exit 22
   fi
+fi
+
+if [ "$RUNTIME_ONLY" -eq 1 ]; then
+  printf '[bootstrap] Node.js and npm prerequisites are ready.\n'
+  exit 0
 fi
 
 export LARK_BRIDGE_MANAGER_NPM="$NPM_COMMAND"

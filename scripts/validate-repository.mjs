@@ -40,6 +40,8 @@ const codexMarketplace = await readJson(join(repositoryRoot, '.agents', 'plugins
 const claudeMarketplace = await readJson(join(repositoryRoot, '.claude-plugin', 'marketplace.json'))
 const shellBootstrap = join(pluginRoot, 'scripts', 'bootstrap.sh')
 const windowsBootstrap = join(pluginRoot, 'scripts', 'bootstrap-windows.ps1')
+const shellTerminalSetup = join(pluginRoot, 'scripts', 'terminal-setup.sh')
+const windowsTerminalSetup = join(pluginRoot, 'scripts', 'terminal-setup.ps1')
 
 for (const manifest of [codexManifest, claudeManifest]) {
   requireValue(manifest?.name === 'lark-agent-bridge', 'plugin manifest name must be lark-agent-bridge')
@@ -56,6 +58,10 @@ const shellBootstrapStat = await lstat(shellBootstrap)
 requireValue(shellBootstrapStat.isFile(), 'macOS bootstrap must be a regular file')
 requireValue((shellBootstrapStat.mode & 0o111) !== 0, 'macOS bootstrap must be executable')
 requireValue((await lstat(windowsBootstrap)).isFile(), 'Windows bootstrap must be a regular file')
+const shellTerminalSetupStat = await lstat(shellTerminalSetup)
+requireValue(shellTerminalSetupStat.isFile(), 'macOS terminal setup must be a regular file')
+requireValue((shellTerminalSetupStat.mode & 0o111) !== 0, 'macOS terminal setup must be executable')
+requireValue((await lstat(windowsTerminalSetup)).isFile(), 'Windows terminal setup must be a regular file')
 
 const presetNames = ['read-only', 'safe-edit', 'full']
 for (const name of presetNames) {

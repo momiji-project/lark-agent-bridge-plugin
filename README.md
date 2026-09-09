@@ -7,11 +7,12 @@ Lark / Feishu からローカルのClaude CodeまたはCodexを利用するた�
 導入は次のゲートを順番に通します。Node.jsやnpmが無い場合もセットアップの途中で止めたままにせず、変更内容を説明して承認を得た後、OS別のブートストラップでNode.jsから整備します。前のゲートが完了するまでBridgeや議事録Pluginを後追い導入しません。
 
 1. macOS / Windows / LinuxとCPUアーキテクチャを判定
-2. Node.js 20.12以上とnpmを確認し、必要ならセットアップ内でNode.js LTSを導入
-3. Lark公式CLI `@larksuite/cli` を確認・導入
-4. `lark-channel-bridge` を確認・導入
-5. Bridgeプロファイルを作成し、Lark IMの往復を確認
-6. 議事録が必要な利用者だけ、別Plugin `sfl-gijiroku` を追加
+2. Codex / Claude Codeの導入とログイン状態を確認
+3. Node.js 20.12以上とnpmを確認し、必要ならセットアップ内でNode.js LTSを導入
+4. Lark公式CLI `@larksuite/cli` を確認・導入
+5. `lark-channel-bridge` を確認・導入
+6. Bridgeプロファイルを作成し、Lark IMの往復を確認
+7. 議事録が必要な利用者だけ、別Plugin `sfl-gijiroku` を追加
 
 最初にMarketplaceを登録し、Bridge専用Pluginを導入します。
 
@@ -19,6 +20,30 @@ Lark / Feishu からローカルのClaude CodeまたはCodexを利用するた�
 codex plugin marketplace add momiji-project/lark-agent-bridge-plugin --ref main
 codex plugin add lark-agent-bridge@momiji-lark-tools
 ```
+
+### ターミナルから直接設定
+
+`$lark-bridge-setup`はエージェントへの依頼であり、ターミナルコマンドではありません。ターミナル操作だけで進める場合は、Plugin追加後にOS別の対話式セットアップを実行します。
+
+macOS:
+
+```bash
+setup_script="$(find "$HOME/.codex/plugins/cache/momiji-lark-tools/lark-agent-bridge" -type f -name terminal-setup.sh -exec ls -t {} + | head -n 1)"
+[ -n "$setup_script" ] || { echo "lark-agent-bridge Pluginが見つかりません。先にPluginを追加してください。"; exit 1; }
+bash "$setup_script"
+```
+
+Windows PowerShell:
+
+```powershell
+$setup = Get-ChildItem "$env:USERPROFILE\.codex\plugins\cache\momiji-lark-tools\lark-agent-bridge" -Filter terminal-setup.ps1 -Recurse | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+if (-not $setup) { throw "lark-agent-bridge Pluginが見つかりません。先にPluginを追加してください。" }
+powershell -NoProfile -ExecutionPolicy Bypass -File $setup.FullName
+```
+
+このウィザードがNode.js/npm、Lark公式CLI、Bridge、プロファイル、権限、起動、診断までを順番に処理します。Node.jsの追加、既存プロファイルの再利用、個人Larkデータへのアクセスは、ターミナル上で確認してから実行します。MinutesやLarkドキュメントを使う選択をした場合は、Bridge専用のLarkユーザー認証URLとQRコードを表示し、承認後に権限を再検査します。
+
+### エージェントへ依頼する場合
 
 新しいセッションでBridgeを設定します。
 

@@ -4,6 +4,7 @@
 param(
   [switch]$CheckOnly,
   [switch]$InstallNodeLts,
+  [switch]$RuntimeOnly,
   [switch]$DryRun
 )
 
@@ -111,7 +112,11 @@ if (-not $runtime.Ready) {
     exit 20
   }
   if ($DryRun) {
-    Write-Host "[dry-run] Install the official Node.js LTS package with Windows Package Manager, then install the official Lark CLI before lark-channel-bridge."
+    if ($RuntimeOnly) {
+      Write-Host "[dry-run] Install the official Node.js LTS package with Windows Package Manager, then stop before installing Lark CLI or Bridge."
+    } else {
+      Write-Host "[dry-run] Install the official Node.js LTS package with Windows Package Manager, then install the official Lark CLI before lark-channel-bridge."
+    }
     exit 0
   }
 
@@ -139,6 +144,11 @@ if (-not $runtime.Ready) {
     Write-Error "Node.js was installed but is not visible yet. Open a new terminal and rerun setup. No Bridge package was installed."
     exit 23
   }
+}
+
+if ($RuntimeOnly) {
+  Write-Host "[bootstrap] Node.js and npm prerequisites are ready."
+  exit 0
 }
 
 $env:LARK_BRIDGE_MANAGER_NPM = $runtime.Npm

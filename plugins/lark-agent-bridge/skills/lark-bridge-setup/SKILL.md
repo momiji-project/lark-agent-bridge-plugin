@@ -7,6 +7,15 @@ description: Install and initialize lark-channel-bridge for Claude Code or Codex
 
 Use the plugin's native bootstrap and `scripts/bridge-manager.mjs`; do not recreate Bridge behavior or hand-edit credential files.
 
+## Direct terminal entry
+
+`$lark-bridge-setup` and `/lark-bridge-setup` are agent/Skill invocations, not terminal commands. When the user explicitly asks to complete setup from Terminal or PowerShell, execute the plugin's terminal wizard instead of presenting a Skill invocation:
+
+- macOS or Linux: `bash <plugin-root>/scripts/terminal-setup.sh`
+- Windows: `powershell -NoProfile -ExecutionPolicy Bypass -File <plugin-root>\scripts\terminal-setup.ps1`
+
+The terminal wizard performs the runtime bootstrap, asks only for missing choices, creates or explicitly reuses one profile, applies `safe-edit`, starts that profile, and runs diagnostics. When personal Minutes/documents access is selected, it performs the profile-private Lark user device flow, shows the unmodified verification URL and a QR code, verifies the required Minutes/Docs scopes, reapplies `user-default`, and restarts the profile. Do not claim a terminal-only flow is complete merely because the Skill can run the same commands.
+
 ## Workflow
 
 1. Resolve the plugin root as two directories above this skill directory.

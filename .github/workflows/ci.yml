@@ -63,6 +63,9 @@ jobs:
         run: |
           bash -n plugins/lark-agent-bridge/scripts/bootstrap.sh
           bash plugins/lark-agent-bridge/scripts/bootstrap.sh --check-only
+          bash plugins/lark-agent-bridge/scripts/bootstrap.sh --runtime-only
+          bash -n plugins/lark-agent-bridge/scripts/terminal-setup.sh
+          bash plugins/lark-agent-bridge/scripts/terminal-setup.sh --runtime-check-only
           bash -n plugins/sfl-lark-ai-suite/scripts/bootstrap.sh
           bash plugins/sfl-lark-ai-suite/scripts/bootstrap.sh --check-only
       - name: Check Windows bootstrap
@@ -70,4 +73,6 @@ jobs:
         shell: powershell
         run: |
           powershell -NoProfile -ExecutionPolicy Bypass -File plugins/lark-agent-bridge/scripts/bootstrap-windows.ps1 -CheckOnly
+          powershell -NoProfile -ExecutionPolicy Bypass -File plugins/lark-agent-bridge/scripts/bootstrap-windows.ps1 -RuntimeOnly
+          powershell -NoProfile -ExecutionPolicy Bypass -File plugins/lark-agent-bridge/scripts/terminal-setup.ps1 -RuntimeCheckOnly
           powershell -NoProfile -ExecutionPolicy Bypass -File plugins/sfl-lark-ai-suite/scripts/bootstrap-windows.ps1 -CheckOnly
