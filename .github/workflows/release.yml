@@ -20,7 +20,8 @@ jobs:
         run: |
           node scripts/validate-repository.mjs
           node scripts/validate-unified-plugin.mjs
-          node --test plugins/lark-agent-bridge/tests/*.test.mjs plugins/sfl-lark-ai-suite/tests/*.test.mjs
+          node scripts/validate-gijiroku-plugin.mjs
+          node --test plugins/lark-agent-bridge/tests/*.test.mjs plugins/sfl-lark-ai-suite/tests/*.test.mjs plugins/sfl-gijiroku/tests/*.test.mjs
       - name: Verify tag matches manifest
         run: |
           expected="v$(node -p "require('./plugins/lark-agent-bridge/.codex-plugin/plugin.json').version")"
@@ -32,9 +33,12 @@ jobs:
           mkdir -p release
           tar -czf "release/lark-agent-bridge-${GITHUB_REF_NAME}.tar.gz" -C plugins lark-agent-bridge
           tar -czf "release/sfl-lark-ai-suite-${GITHUB_REF_NAME}.tar.gz" -C plugins sfl-lark-ai-suite
+          gijiroku_version="v$(node -p "require('./plugins/sfl-gijiroku/.codex-plugin/plugin.json').version")"
+          tar -czf "release/sfl-gijiroku-${gijiroku_version}.tar.gz" -C plugins sfl-gijiroku
           cd plugins
           zip -qr "../release/lark-agent-bridge-${GITHUB_REF_NAME}.zip" lark-agent-bridge
           zip -qr "../release/sfl-lark-ai-suite-${GITHUB_REF_NAME}.zip" sfl-lark-ai-suite
+          zip -qr "../release/sfl-gijiroku-${gijiroku_version}.zip" sfl-gijiroku
           cd ../release
           sha256sum *.tar.gz *.zip > SHA256SUMS
       - name: Publish GitHub Release

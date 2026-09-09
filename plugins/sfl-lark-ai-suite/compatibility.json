@@ -1,11 +1,16 @@
 {
   "schemaVersion": 1,
-  "pluginVersion": "0.2.0",
+  "pluginVersion": "0.2.1",
   "bridge": {
     "package": "lark-channel-bridge",
     "minimumVersion": "0.7.1",
     "testedVersion": "0.7.1",
     "node": ">=20.12.0"
+  },
+  "larkCli": {
+    "package": "@larksuite/cli",
+    "minimumVersion": "1.0.85",
+    "testedVersion": "1.0.94"
   },
   "agents": {
     "claude": {

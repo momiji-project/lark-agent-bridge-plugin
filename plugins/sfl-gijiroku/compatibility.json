@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "pluginVersion": "0.1.0",
+  "bridge": {
+    "package": "lark-channel-bridge",
+    "minimumVersion": "0.7.1",
+    "managedByThisPlugin": false
+  },
+  "larkCli": {
+    "command": "lark-cli",
+    "minimumVersion": "1.0.85",
+    "requiredDomains": [
+      "minutes",
+      "docs",
+      "im"
+    ]
+  },
+  "platforms": [
+    "macOS",
+    "Linux",
+    "Windows"
+  ]
+}

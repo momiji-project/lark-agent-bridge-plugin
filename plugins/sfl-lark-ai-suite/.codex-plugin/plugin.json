@@ -1,6 +1,6 @@
 {
   "name": "sfl-lark-ai-suite",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Lark IMとAIエージェントを接続し、MinutesからLarkドキュメントと共有用画像の議事録を作る機能を一つにまとめて導入・設定します。",
   "author": {
     "name": "Salon Flow Love"
@@ -9,7 +9,7 @@
   "interface": {
     "displayName": "SFL Lark AI Suite",
     "shortDescription": "Lark接続と議事録を一つのPluginで導入",
-    "longDescription": "Bridgeの導入・設定・診断・更新と、Lark Minutesの文字起こしからLarkドキュメントと共有用画像を作る議事録機能を一つのPluginに収録しています。おすすめ一括設定なら、必要な確認だけでBridgeと議事録をまとめて準備できます。",
+    "longDescription": "Lark公式Channel SDKを使うBridgeの導入・設定・診断・更新と、Lark Minutesの文字起こしからLarkドキュメントと共有用画像を作る議事録機能を一つのPluginに収録しています。おすすめ一括設定なら、必要な確認だけでBridgeと議事録をまとめて準備できます。",
     "developerName": "Salon Flow Love",
     "category": "Productivity",
     "capabilities": [

@@ -17,16 +17,19 @@ Explain the configuration boundary first:
 1. Resolve the plugin root as two directories above this skill directory.
 2. Run `node <plugin-root>/scripts/bridge-manager.mjs doctor --profile <name> --json`.
 3. Choose one preset: `read-only`, `safe-edit` (default), or `full` (explicit confirmation required).
-4. Keep the model at `default` unless the user names a model. Do not copy model IDs between Claude and Codex.
-5. Preview the exact change:
+4. Choose the Lark CLI identity independently from filesystem permissions.
+   - Keep `bot-only` unless the user needs personal Lark resources.
+   - Minutes and personal documents require `user-default`. Explain the additional reach and obtain explicit approval before adding `--lark-cli-identity user-default --confirm-user-default`.
+5. Keep the model at `default` unless the user names a model. Do not copy model IDs between Claude and Codex.
+6. Preview the exact change:
 
    ```bash
    node <plugin-root>/scripts/bridge-manager.mjs preset \
      --profile <name> --preset <preset> --workspace <absolute-path> --dry-run
    ```
 
-6. Apply only after the preview is accepted. Preserve credentials, allowlists, unrelated preferences, and other profiles.
-7. Restart only if the changed field requires it, and only if that profile was running before the change.
+7. Apply only after the preview is accepted. Preserve credentials, allowlists, unrelated preferences, and other profiles.
+8. Restart only if the changed field requires it, and only if that profile was running before the change. When this Skill is running inside the same active Lark profile, report that a restart is required and let a local session perform it after the current reply is delivered.
 
 ## Install managed Developer-style instructions
 

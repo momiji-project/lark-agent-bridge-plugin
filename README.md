@@ -1,30 +1,51 @@
-# SFL Lark AI Plugins
+# SFL Lark Plugins
 
-Lark / Feishu からローカルの Claude CodeまたはCodexを使うBridge単体版と、ドキュメント・共有用画像の議事録まで一つにまとめた統合版を配布します。新規導入では `sfl-lark-ai-suite` を推奨します。
+Lark / Feishu からローカルのClaude CodeまたはCodexを利用するためのBridge用Pluginと、Lark Minutesから議事録を作るPluginを別々に配布します。Bridge本体・認証と、議事録の要約・デザイン設定を混在させません。
 
-## 推奨: 統合版を一括導入
+## 推奨: 土台と追加機能を分けて導入
 
-Codexでは、Marketplace登録とPlugin導入を一行で実行できます。
+導入は次のゲートを順番に通します。OS、Node.js、npmのいずれかが不合格なら、その場で停止してBridgeや議事録Pluginを後追い導入しません。
+
+1. macOS / Windows / LinuxとCPUアーキテクチャを判定
+2. Node.js 20.12以上とnpmを確認
+3. Lark公式CLI `@larksuite/cli` を確認・導入
+4. `lark-channel-bridge` を確認・導入
+5. Bridgeプロファイルを作成し、Lark IMの往復を確認
+6. 議事録が必要な利用者だけ、別Plugin `sfl-gijiroku` を追加
+
+最初にMarketplaceを登録し、Bridge専用Pluginを導入します。
 
 ```bash
-codex plugin marketplace add momiji-project/lark-agent-bridge-plugin --ref main && codex plugin add sfl-lark-ai-suite@momiji-lark-tools
+codex plugin marketplace add momiji-project/lark-agent-bridge-plugin --ref main
+codex plugin add lark-agent-bridge@momiji-lark-tools
 ```
 
-新しいセッションで次のように依頼します。
+新しいセッションでBridgeを設定します。
 
 ```text
-$sfl-lark-setup Bridgeと議事録をおすすめ設定で一括導入してください
+$lark-bridge-setup Lark BridgeをこのPCに初期設定してください
 ```
 
-おすすめ一括設定では、Bridgeを `safe-edit`、議事録を「標準要約・Larkドキュメント＋共有用画像・テイスト自動・ロゴなし・議事録依頼の明示トリガー」で開始します。既存の正常な設定は上書きしません。ロゴや固定デザインは導入後に `gijiroku-image-setup` で追加できます。
+Bridgeの疎通確認が終わった後、議事録が必要な場合だけ専用Pluginを追加します。Minutesと個人ドキュメントを使うプロファイルでは、土台側の設定時に追加範囲を説明し、明示承認を得てLark CLI identityを`user-default`にします。議事録Plugin自身はBridge設定を変更しません。
 
-📘 [SFL Lark AI Suite 導入ガイド](https://sfl-lark-ai-bridge-guide.pages.dev/)
+```bash
+codex plugin add sfl-gijiroku@momiji-lark-tools
+```
 
-Bridge本体は再実装せず、MITライセンスの [`lark-channel-bridge`](https://github.com/zarazhangrui/lark-coding-agent-bridge) を利用します。このリポジトリは、設定ファイルや秘密情報を手作業で編集せずに導入できる運用レイヤーを提供します。
+さらに新しいセッションで議事録だけを設定します。
+
+```text
+$gijiroku-setup 議事録Pluginをおすすめ設定で初期設定してください。Bridgeの設定は変更しないでください。
+```
+
+議事録Pluginは、標準要約・Larkドキュメント＋共有用画像・テイスト自動・ロゴなし・議事録作成を明示する自然言語トリガーで開始します。
+
+Bridge本体は再実装せず、Lark公式のChannel SDKを基盤にするMITライセンスの [`lark-channel-bridge`](https://github.com/zarazhangrui/lark-coding-agent-bridge) を利用します。このリポジトリは、設定ファイルや秘密情報を手作業で編集せずに導入できる運用レイヤーだけを提供します。
 
 ## できること
 
-- Node.js、Claude Code、Codex、Bridgeの事前確認
+- OSとCPU、Node.js、npm、Lark公式CLI、Claude Code、Codex、Bridgeの事前確認
+- Lark公式CLIをBridgeより先に導入する順序制御
 - Lark PersonalAgentのQR登録とプロファイル作成
 - `read-only` / `safe-edit` / `full` の権限プリセット
 - Bridgeで使う `CLAUDE.md` / `AGENTS.md` の管理ブロック生成
@@ -34,7 +55,7 @@ Bridge本体は再実装せず、MITライセンスの [`lark-channel-bridge`](h
 
 ## 対応範囲
 
-初期版は、Node.js 20.12以上が動作し、Claude CodeまたはCodex CLIがインストール済みのmacOS、Linux、Windowsを対象にします。LarkのQR認証と各エージェントへのログインは利用者本人が行います。
+Node.js 20.12以上が動作し、Claude CodeまたはCodex CLIがインストール済みのmacOS、Linux、Windowsを対象にします。LarkのQR認証、個人Larkデータを利用する場合のuser認証、各エージェントへのログインは利用者本人が行います。
 
 ## Codexへインストール
 
@@ -64,6 +85,18 @@ Claude Codeで次を実行します。
 /lark-bridge-setup Lark BridgeをこのPCに初期設定してください
 ```
 
+Bridgeの接続確認後、議事録Pluginを別に追加します。
+
+```text
+/plugin install sfl-gijiroku@momiji-lark-tools
+```
+
+新しいセッションで次のように依頼します。
+
+```text
+/gijiroku-setup 議事録Pluginをおすすめ設定で初期設定してください。Bridgeの設定は変更しないでください。
+```
+
 ## Skills
 
 | Skill | 用途 |
@@ -72,6 +105,10 @@ Claude Codeで次を実行します。
 | `lark-bridge-doctor` | 設定を変更しない状態診断 |
 | `lark-bridge-agent-config` | エージェント、権限、workspace、Developer相当ルールの設定 |
 | `lark-bridge-update` | Bridgeの互換性確認付き更新 |
+| `gijiroku-setup` | 議事録Pluginだけの初回設定・再設定 |
+| `gijiroku` | MinutesからLarkドキュメントと共有用画像を作成 |
+
+`sfl-lark-ai-suite` は既存利用者との互換性のため残していますが、新規導入ではBridge用と議事録用を分けます。
 
 ## Developer設定について
 
@@ -92,16 +129,18 @@ Claude Codeで次を実行します。
 - modelはエージェント側の既定値
 - COTと詳細tool出力は非表示
 
-`full` はローカル全体へアクセスできるため、明示確認なしでは適用しません。
+`bot-only`は通常の安全な既定値です。Minutesや個人ドキュメントを使う場合だけ、追加範囲を説明して明示承認を得たうえで`user-default`へ切り替えます。`full` はローカル全体へアクセスできるため、明示確認なしでは適用しません。
 
 ## 開発と検証
 
 ```bash
-node --test plugins/lark-agent-bridge/tests/*.test.mjs
+node --test plugins/lark-agent-bridge/tests/*.test.mjs plugins/sfl-gijiroku/tests/*.test.mjs
+node scripts/validate-gijiroku-plugin.mjs
 python3 /path/to/plugin-creator/scripts/validate_plugin.py plugins/lark-agent-bridge
+python3 /path/to/plugin-creator/scripts/validate_plugin.py plugins/sfl-gijiroku
 ```
 
-プラグイン版とBridge版は独立して管理します。対応Bridge版は [`compatibility.json`](plugins/lark-agent-bridge/compatibility.json) を正本とします。
+議事録PluginとBridge用Pluginは独立して管理します。対応Bridge版は各Pluginの`compatibility.json`を正本とします。
 
 ## 秘密情報
 

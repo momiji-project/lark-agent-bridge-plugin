@@ -14,6 +14,12 @@
       "category": "productivity"
     },
     {
+      "name": "sfl-gijiroku",
+      "description": "接続済みのLark Bridgeを利用して、MinutesからLarkドキュメントと共有用画像の議事録を作成します。Bridgeの導入や設定は行いません。",
+      "source": "./plugins/sfl-gijiroku",
+      "category": "productivity"
+    },
+    {
       "name": "sfl-lark-ai-suite",
       "description": "Bridge接続と、Lark Minutesからドキュメント・共有用画像を作る議事録機能を一つにまとめて導入・設定します。",
       "source": "./plugins/sfl-lark-ai-suite",

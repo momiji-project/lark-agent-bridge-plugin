@@ -1,0 +1,6 @@
+interface:
+  display_name: "議事録を作成"
+  short_description: "Lark Minutesからドキュメントと共有用画像を作る"
+  default_prompt: "$gijiroku を使って、最新のLark Minutesからドキュメントと共有用画像の議事録を作ってください。"
+policy:
+  allow_implicit_invocation: true

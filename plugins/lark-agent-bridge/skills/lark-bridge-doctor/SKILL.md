@@ -19,13 +19,14 @@ Keep diagnosis read-only unless the user separately asks for a repair.
    ```
 
 3. If a profile was named, add `--profile <name>` to the doctor command and check `lark-channel-bridge status --profile <name>`.
-4. Report each layer separately: Node.js requirement, agent binary, Bridge version, profile, daemon, workspace, and log paths.
+4. Report each layer separately: detected OS/architecture, Node.js, npm, official Lark CLI, agent binary, Bridge version, profile, Lark CLI identity, daemon, workspace, and log paths.
 5. Do not print config values whose key contains `secret`, `token`, `credential`, `password`, or `key`.
 6. Recommend the smallest repair command. Do not run install, update, restart, unregister, remove, or purge while diagnosing.
 
 ## Common outcomes
 
 - Missing Bridge: use `lark-bridge-setup`.
+- Missing official Lark CLI: use `lark-bridge-setup`; do not install Bridge first.
 - Old Bridge: use `lark-bridge-update`.
 - Missing or wrong agent profile: use `lark-bridge-agent-config`.
 - Agent not logged in: ask the user to complete the agent's local login.

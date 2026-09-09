@@ -1,0 +1,27 @@
+{
+  "name": "sfl-gijiroku",
+  "version": "0.1.0",
+  "description": "接続済みのLark Bridgeを利用し、Lark MinutesからLarkドキュメントと共有用画像の議事録を作成します。Bridge本体の導入や設定は行いません。",
+  "author": {
+    "name": "Salon Flow Love"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "SFL 議事録",
+    "shortDescription": "Lark Minutesから文書と共有画像の議事録を作成",
+    "longDescription": "既に接続されているLark Bridgeを入口として、Minutesの逐字稿から要約・決定事項・タスクを整理し、Larkドキュメントと共有用画像を同時に作成します。初回セットアップで要約量、画像テイスト、ロゴ、保存先、自然言語での起動範囲を設定できます。Bridge本体と認証設定は変更しません。",
+    "developerName": "Salon Flow Love",
+    "category": "Productivity",
+    "capabilities": [
+      "Lark Minutes transcript summarization",
+      "Lark document meeting minutes",
+      "Shareable meeting-minutes images",
+      "Brand style and logo configuration",
+      "Natural-language invocation"
+    ],
+    "defaultPrompt": [
+      "議事録Pluginの初回セットアップを行ってください。Bridgeの設定は変更しないでください。",
+      "最新のLark Minutesから、Larkドキュメントと共有用画像の議事録を作ってください。"
+    ]
+  }
+}

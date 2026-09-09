@@ -16,9 +16,11 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const DEFAULT_BRIDGE_VERSION = "0.7.1";
+const DEFAULT_LARK_CLI_VERSION = "1.0.94";
 const MINIMUM_NODE_VERSION = "20.12.0";
 const AGENTS = new Set(["claude", "codex"]);
 const PRESET_NAMES = new Set(["read-only", "safe-edit", "full"]);
+const LARK_CLI_IDENTITIES = new Set(["bot-only", "user-default"]);
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const PLUGIN_DIRECTORY = path.resolve(SCRIPT_DIRECTORY, "..");
 const RULES_BEGIN = "<!-- BEGIN LARK_AGENT_BRIDGE -->";
@@ -31,15 +33,15 @@ const OPTION_SCHEMAS = Object.freeze({
   },
   install: {
     value: new Set(["bridge-version"]),
-    boolean: new Set(["dry-run", "json"]),
+    boolean: new Set(["install-node-lts", "dry-run", "json"]),
   },
   doctor: {
     value: new Set(["profile", "config"]),
     boolean: new Set(["json"]),
   },
   preset: {
-    value: new Set(["profile", "preset", "agent", "workspace", "config"]),
-    boolean: new Set(["confirm-full", "dry-run", "json"]),
+    value: new Set(["profile", "preset", "agent", "workspace", "config", "lark-cli-identity"]),
+    boolean: new Set(["confirm-full", "confirm-user-default", "dry-run", "json"]),
   },
   rules: {
     value: new Set(["agent", "target"]),
@@ -47,7 +49,7 @@ const OPTION_SCHEMAS = Object.freeze({
   },
   update: {
     value: new Set(["bridge-version"]),
-    boolean: new Set(["dry-run", "json"]),
+    boolean: new Set(["install-node-lts", "dry-run", "json"]),
   },
 });
 
@@ -83,13 +85,24 @@ function defaultConfigPath(env = process.env) {
 function commandName(kind, env = process.env, platform = process.platform) {
   const overrides = {
     npm: env.LARK_BRIDGE_MANAGER_NPM,
+    winget: env.LARK_BRIDGE_MANAGER_WINGET,
     bridge: env.LARK_BRIDGE_MANAGER_BRIDGE,
+    larkCli: env.LARK_BRIDGE_MANAGER_LARK_CLI,
     claude: env.LARK_BRIDGE_MANAGER_CLAUDE,
     codex: env.LARK_BRIDGE_MANAGER_CODEX,
   };
   if (overrides[kind]) return overrides[kind];
   if (kind === "npm") return platform === "win32" ? "npm.cmd" : "npm";
+  if (kind === "winget") return platform === "win32" ? "winget.exe" : "winget";
+  if (kind === "larkCli") return platform === "win32" ? "lark-cli.cmd" : "lark-cli";
   return kind === "bridge" ? "lark-channel-bridge" : kind;
+}
+
+function runtimePlatform(env = process.env) {
+  const testPlatform = env.LARK_BRIDGE_MANAGER_TEST_PLATFORM;
+  return testPlatform === "win32" || testPlatform === "darwin" || testPlatform === "linux"
+    ? testPlatform
+    : process.platform;
 }
 
 function parseStableVersion(value) {
@@ -121,6 +134,13 @@ function validateAgent(agent) {
     throw new CliError("--agent must be claude or codex.", { exitCode: 2 });
   }
   return agent;
+}
+
+function validateLarkCliIdentity(identity) {
+  if (!LARK_CLI_IDENTITIES.has(identity)) {
+    throw new CliError("--lark-cli-identity must be bot-only or user-default.", { exitCode: 2 });
+  }
+  return identity;
 }
 
 function validateProfileName(profile) {
@@ -206,10 +226,97 @@ async function runCommand(command, args, { env = process.env, timeoutMs = 30_000
   });
 }
 
-async function executableCheck(kind, args = ["--version"]) {
-  const result = await runCommand(commandName(kind), args, { timeoutMs: 8_000 });
+async function executableCheckCommand(command, args = ["--version"], env = process.env) {
+  const result = await runCommand(command, args, { env, timeoutMs: 8_000 });
   const version = result.ok ? parseSemver(`${result.stdout}\n${result.stderr}`)?.join(".") : undefined;
   return { available: result.ok, version };
+}
+
+async function executableCheck(kind, args = ["--version"], env = process.env) {
+  return await executableCheckCommand(commandName(kind, env, runtimePlatform(env)), args, env);
+}
+
+async function isFile(file) {
+  try {
+    return (await stat(file)).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function windowsNpmCandidates(env = process.env) {
+  const candidates = [
+    path.join(path.dirname(process.execPath), "npm.cmd"),
+    env.ProgramFiles && path.join(env.ProgramFiles, "nodejs", "npm.cmd"),
+    env.PROGRAMFILES && path.join(env.PROGRAMFILES, "nodejs", "npm.cmd"),
+    env.LOCALAPPDATA && path.join(env.LOCALAPPDATA, "Programs", "nodejs", "npm.cmd"),
+    env.APPDATA && path.join(env.APPDATA, "npm", "npm.cmd"),
+    env.NVM_SYMLINK && path.join(env.NVM_SYMLINK, "npm.cmd"),
+  ].filter(Boolean);
+  return [...new Set(candidates.map((candidate) => path.resolve(candidate)))];
+}
+
+async function resolveNpmCommand(env = process.env) {
+  const platform = runtimePlatform(env);
+  if (env.LARK_BRIDGE_MANAGER_NPM) {
+    const check = await executableCheckCommand(env.LARK_BRIDGE_MANAGER_NPM, ["--version"], env);
+    return { ...check, command: env.LARK_BRIDGE_MANAGER_NPM, source: "override" };
+  }
+
+  const directCommand = commandName("npm", env, platform);
+  const direct = await executableCheckCommand(directCommand, ["--version"], env);
+  if (direct.available) return { ...direct, command: directCommand, source: "path" };
+
+  if (platform === "win32") {
+    for (const candidate of windowsNpmCandidates(env)) {
+      if (!(await isFile(candidate))) continue;
+      const check = await executableCheckCommand(candidate, ["--version"], env);
+      if (check.available) return { ...check, command: candidate, source: "windows-standard-location" };
+    }
+  }
+  return { available: false, command: null, source: "unavailable" };
+}
+
+function npmGlobalCommandCandidate(kind, prefix, platform) {
+  const binary = kind === "bridge" ? "lark-channel-bridge" : "lark-cli";
+  return platform === "win32"
+    ? path.join(prefix, `${binary}.cmd`)
+    : path.join(prefix, "bin", binary);
+}
+
+async function resolveManagedCommand(kind, npmCommand, env = process.env) {
+  const platform = runtimePlatform(env);
+  const directCommand = commandName(kind, env, platform);
+  const direct = await executableCheckCommand(directCommand, ["--version"], env);
+  if (direct.available) return { ...direct, command: directCommand, source: "path-or-override" };
+  if (!npmCommand) return { available: false, command: directCommand, source: "unavailable" };
+
+  const prefixResult = await runCommand(npmCommand, ["prefix", "--global"], { env, timeoutMs: 15_000 });
+  const prefix = prefixResult.ok ? prefixResult.stdout.trim().split(/\r?\n/).filter(Boolean).at(-1) : "";
+  if (!prefix) return { available: false, command: directCommand, source: "unavailable" };
+  const candidate = npmGlobalCommandCandidate(kind, prefix, platform);
+  if (!(await isFile(candidate))) return { available: false, command: directCommand, source: "unavailable" };
+  const check = await executableCheckCommand(candidate, ["--version"], env);
+  return check.available
+    ? { ...check, command: candidate, source: "npm-global-prefix" }
+    : { available: false, command: directCommand, source: "unavailable" };
+}
+
+async function resolveWingetCommand(env = process.env) {
+  const platform = runtimePlatform(env);
+  if (platform !== "win32") return { available: false, command: null };
+  const candidates = [
+    commandName("winget", env, platform),
+    !env.LARK_BRIDGE_MANAGER_WINGET && env.LOCALAPPDATA
+      ? path.join(env.LOCALAPPDATA, "Microsoft", "WindowsApps", "winget.exe")
+      : null,
+  ].filter(Boolean);
+  for (const candidate of [...new Set(candidates)]) {
+    if (path.isAbsolute(candidate) && !(await isFile(candidate))) continue;
+    const check = await executableCheckCommand(candidate, ["--version"], env);
+    if (check.available) return { ...check, command: candidate };
+  }
+  return { available: false, command: null };
 }
 
 function makeCheck(name, status, message, data = {}) {
@@ -229,12 +336,17 @@ async function loadCompatibility() {
     throw new CliError(`Compatibility manifest is missing or invalid: ${compatibilityPath}`);
   }
   const bridge = compatibility?.bridge;
+  const larkCli = compatibility?.larkCli;
   if (
     compatibility?.schemaVersion !== 1 ||
     bridge?.package !== "lark-channel-bridge" ||
     !/^\d+\.\d+\.\d+$/.test(bridge?.minimumVersion || "") ||
     !/^\d+\.\d+\.\d+$/.test(bridge?.testedVersion || "") ||
-    compareVersions(bridge.testedVersion, bridge.minimumVersion) < 0
+    compareVersions(bridge.testedVersion, bridge.minimumVersion) < 0 ||
+    larkCli?.package !== "@larksuite/cli" ||
+    !/^\d+\.\d+\.\d+$/.test(larkCli?.minimumVersion || "") ||
+    !/^\d+\.\d+\.\d+$/.test(larkCli?.testedVersion || "") ||
+    compareVersions(larkCli.testedVersion, larkCli.minimumVersion) < 0
   ) {
     throw new CliError(`Compatibility manifest failed schema validation: ${compatibilityPath}`);
   }
@@ -244,6 +356,14 @@ async function loadCompatibility() {
 async function collectPreflight(agent) {
   const compatibility = await loadCompatibility();
   const checks = [];
+  const platform = runtimePlatform();
+  const platformLabel = platform === "darwin" ? "macOS" : platform === "win32" ? "Windows" : "Linux";
+  checks.push(
+    makeCheck("os", "pass", `${platformLabel} (${process.arch}) was detected.`, {
+      platform,
+      architecture: process.arch,
+    }),
+  );
   const nodeComparison = compareVersions(process.versions.node, MINIMUM_NODE_VERSION);
   checks.push(
     makeCheck(
@@ -256,13 +376,23 @@ async function collectPreflight(agent) {
     ),
   );
 
-  const npm = await executableCheck("npm");
+  const npm = await resolveNpmCommand();
   checks.push(
     makeCheck(
       "npm",
       npm.available ? "pass" : "error",
-      npm.available ? "npm is available." : "npm was not found on PATH.",
-      npm.version ? { version: npm.version } : {},
+      npm.available
+        ? npm.source === "windows-standard-location"
+          ? "npm is available in a standard Windows Node.js location."
+          : "npm is available."
+        : runtimePlatform() === "win32"
+          ? "npm is unavailable. Install the official Node.js LTS package (which includes npm), or use install --install-node-lts after the user approves that system change."
+          : "npm is unavailable. Install Node.js with npm before continuing.",
+      {
+        ...(npm.version ? { version: npm.version } : {}),
+        source: npm.source,
+        repairAvailable: runtimePlatform() === "win32" && !npm.available,
+      },
     ),
   );
 
@@ -286,7 +416,33 @@ async function collectPreflight(agent) {
     checks.push(makeCheck("agent", "error", "Install and sign in to at least one supported agent CLI."));
   }
 
-  const bridge = await executableCheck("bridge");
+  const larkCli = await resolveManagedCommand("larkCli", npm.command);
+  const larkCliComparison = larkCli.version
+    ? compareVersions(larkCli.version, compatibility.larkCli.minimumVersion)
+    : null;
+  const larkCliTooOld = larkCli.available && larkCliComparison !== null && larkCliComparison < 0;
+  const larkCliVersionUnknown = larkCli.available && larkCliComparison === null;
+  checks.push(
+    makeCheck(
+      "lark-cli",
+      !larkCli.available || larkCliTooOld || larkCliVersionUnknown ? "warning" : "pass",
+      !larkCli.available
+        ? "Official Lark CLI is not installed yet; the Bridge installer will install it before the Bridge."
+        : larkCliTooOld
+          ? `Official Lark CLI ${larkCli.version} is below the supported minimum ${compatibility.larkCli.minimumVersion}; run the update command.`
+          : larkCliVersionUnknown
+            ? "Official Lark CLI is installed, but its version could not be determined; update is recommended."
+            : `Official Lark CLI ${larkCli.version} is installed and supported.`,
+      {
+        ...(larkCli.version ? { version: larkCli.version } : {}),
+        minimumVersion: compatibility.larkCli.minimumVersion,
+        testedVersion: compatibility.larkCli.testedVersion,
+        updateRecommended: !larkCli.available || larkCliTooOld || larkCliVersionUnknown,
+      },
+    ),
+  );
+
+  const bridge = await resolveManagedCommand("bridge", npm.command);
   const bridgeComparison = bridge.version
     ? compareVersions(bridge.version, compatibility.bridge.minimumVersion)
     : null;
@@ -324,65 +480,149 @@ async function preflightCommand(options) {
   return { ok: checksOkay(checks), command: "preflight", checks };
 }
 
-async function installedBridgeVersion() {
-  const check = await executableCheck("bridge");
+async function installedManagedVersion(kind, npmCommand) {
+  const check = await resolveManagedCommand(kind, npmCommand);
   return check.available ? check.version : undefined;
 }
 
-async function npmInstallBridge(version) {
-  const npm = commandName("npm");
+async function npmInstallPackage(packageSpec, npmCommand) {
   const result = await runCommand(
-    npm,
-    ["install", "--global", "--no-audit", "--no-fund", "--loglevel=error", `lark-channel-bridge@${version}`],
+    npmCommand,
+    ["install", "--global", "--no-audit", "--no-fund", "--loglevel=error", packageSpec],
     { timeoutMs: 180_000 },
   );
   if (!result.ok) {
     throw new CliError(
-      `npm could not install lark-channel-bridge@${version} (exit ${result.code ?? "unavailable"}). Run npm diagnostics separately; subprocess output was withheld to avoid exposing credentials.`,
+      `npm could not install ${packageSpec} (exit ${result.code ?? "unavailable"}). Run npm diagnostics separately; subprocess output was withheld to avoid exposing credentials.`,
     );
   }
 }
 
-async function ensureInstallRequirements() {
+async function installNodeLtsWithWinget(wingetCommand) {
+  const result = await runCommand(
+    wingetCommand,
+    [
+      "install",
+      "--exact",
+      "--id",
+      "OpenJS.NodeJS.LTS",
+      "--source",
+      "winget",
+      "--accept-source-agreements",
+      "--accept-package-agreements",
+      "--disable-interactivity",
+    ],
+    { timeoutMs: 600_000 },
+  );
+  if (!result.ok) {
+    throw new CliError(
+      `winget could not install the official Node.js LTS package (exit ${result.code ?? "unavailable"}). No Bridge package was installed.`,
+    );
+  }
+}
+
+async function ensureInstallRequirements(options = {}) {
   if ((compareVersions(process.versions.node, MINIMUM_NODE_VERSION) ?? -1) < 0) {
     throw new CliError(`Node.js ${MINIMUM_NODE_VERSION} or newer is required.`);
   }
-  const npm = await executableCheck("npm");
-  if (!npm.available) throw new CliError("npm was not found on PATH.");
+  let npm = await resolveNpmCommand();
+  if (npm.available) return { npmCommand: npm.command, nodeLtsInstallPlanned: false };
+
+  if (runtimePlatform() !== "win32") {
+    throw new CliError("npm is unavailable. Install Node.js with npm before continuing.");
+  }
+  if (!options["install-node-lts"]) {
+    throw new CliError(
+      "npm is unavailable on Windows. After the user approves installing the official Node.js LTS package, rerun with --install-node-lts.",
+      { details: { repairFlag: "--install-node-lts", packageId: "OpenJS.NodeJS.LTS" } },
+    );
+  }
+  const winget = await resolveWingetCommand();
+  if (!winget.available) {
+    throw new CliError(
+      "npm is unavailable and Windows Package Manager (winget) is not available. Install the official Node.js LTS package manually, then start a new terminal.",
+    );
+  }
+  if (options["dry-run"]) {
+    return { npmCommand: null, nodeLtsInstallPlanned: true };
+  }
+
+  await installNodeLtsWithWinget(winget.command);
+  npm = await resolveNpmCommand();
+  if (!npm.available) {
+    throw new CliError(
+      "Node.js LTS installation completed, but npm is not visible to this process. Start a new terminal and rerun the Bridge setup.",
+    );
+  }
+  return { npmCommand: npm.command, nodeLtsInstallPlanned: true };
 }
 
 async function installCommand(options) {
-  const version = parseStableVersion(
-    options["bridge-version"] || (await loadCompatibility()).bridge.testedVersion,
-  );
-  await ensureInstallRequirements();
-  const beforeVersion = await installedBridgeVersion();
+  const compatibility = await loadCompatibility();
+  const bridgeVersion = parseStableVersion(options["bridge-version"] || compatibility.bridge.testedVersion);
+  const larkCliVersion = compatibility.larkCli.testedVersion;
+  const detectedNpm = await resolveNpmCommand();
+  const beforeLarkCliVersion = await installedManagedVersion("larkCli", detectedNpm.command);
+  const beforeBridgeVersion = await installedManagedVersion("bridge", detectedNpm.command);
+  const installLarkCli = beforeLarkCliVersion !== larkCliVersion;
+  const installBridge = beforeBridgeVersion !== bridgeVersion;
+  if (!installLarkCli && !installBridge && !options["dry-run"]) {
+    return {
+      ok: true,
+      command: "install",
+      changed: false,
+      version: bridgeVersion,
+      larkCliVersion,
+      message: "Official Lark CLI and Bridge are already at the requested versions.",
+    };
+  }
+  const requirements = installLarkCli || installBridge
+    ? await ensureInstallRequirements(options)
+    : { npmCommand: null, nodeLtsInstallPlanned: false };
   if (options["dry-run"]) {
     return {
       ok: true,
       command: "install",
       dryRun: true,
-      beforeVersion: beforeVersion || null,
-      targetVersion: version,
-      plannedActions: beforeVersion === version ? [] : [`Install lark-channel-bridge@${version} globally`],
+      beforeLarkCliVersion: beforeLarkCliVersion || null,
+      beforeBridgeVersion: beforeBridgeVersion || null,
+      targetLarkCliVersion: larkCliVersion,
+      targetBridgeVersion: bridgeVersion,
+      plannedActions: [
+        ...(requirements.nodeLtsInstallPlanned
+          ? ["Install the official Node.js LTS package with winget (provides npm)"]
+          : []),
+        ...(installLarkCli ? [`Install @larksuite/cli@${larkCliVersion} globally`] : []),
+        ...(installBridge ? [`Install lark-channel-bridge@${bridgeVersion} globally`] : []),
+      ],
     };
   }
-  if (beforeVersion === version) {
-    return { ok: true, command: "install", changed: false, version, message: "Requested version is already installed." };
+  if (installLarkCli) {
+    await npmInstallPackage(`@larksuite/cli@${larkCliVersion}`, requirements.npmCommand);
   }
-  await npmInstallBridge(version);
-  const afterVersion = await installedBridgeVersion();
-  if (afterVersion !== version) {
-    throw new CliError(`Installation finished, but the resolved bridge version is ${afterVersion || "unknown"}; expected ${version}.`);
+  if (installBridge) {
+    await npmInstallPackage(`lark-channel-bridge@${bridgeVersion}`, requirements.npmCommand);
+  }
+  const afterLarkCliVersion = await installedManagedVersion("larkCli", requirements.npmCommand);
+  const afterBridgeVersion = await installedManagedVersion("bridge", requirements.npmCommand);
+  if (afterLarkCliVersion !== larkCliVersion) {
+    throw new CliError(
+      `Installation finished, but the resolved official Lark CLI version is ${afterLarkCliVersion || "unknown"}; expected ${larkCliVersion}. Start a new terminal if the global npm command path has just changed.`,
+    );
+  }
+  if (afterBridgeVersion !== bridgeVersion) {
+    throw new CliError(`Installation finished, but the resolved bridge version is ${afterBridgeVersion || "unknown"}; expected ${bridgeVersion}.`);
   }
   return {
     ok: true,
     command: "install",
     changed: true,
-    beforeVersion: beforeVersion || null,
-    version: afterVersion,
+    beforeLarkCliVersion: beforeLarkCliVersion || null,
+    beforeBridgeVersion: beforeBridgeVersion || null,
+    larkCliVersion: afterLarkCliVersion,
+    version: afterBridgeVersion,
     startedProfiles: [],
-    message: "Bridge installed. No profile was started automatically.",
+    message: "Official Lark CLI and Bridge prerequisites are ready. No profile was started automatically.",
   };
 }
 
@@ -444,7 +684,10 @@ function isRunningStatus(output) {
 }
 
 async function profileServiceStatus(profile) {
-  const result = await runCommand(commandName("bridge"), ["status", "--profile", profile], { timeoutMs: 15_000 });
+  const npm = await resolveNpmCommand();
+  const bridge = await resolveManagedCommand("bridge", npm.command);
+  if (!bridge.available) return { available: false, running: false };
+  const result = await runCommand(bridge.command, ["status", "--profile", profile], { timeoutMs: 15_000 });
   if (!result.ok) return { available: false, running: false };
   return { available: true, running: isRunningStatus(`${result.stdout}\n${result.stderr}`) };
 }
@@ -569,6 +812,18 @@ async function doctorCommand(options) {
     );
   }
 
+  const larkCliIdentity = selectedProfile.larkCli?.identityPreset;
+  checks.push(
+    makeCheck(
+      "lark-cli-identity",
+      LARK_CLI_IDENTITIES.has(larkCliIdentity) ? "pass" : "error",
+      LARK_CLI_IDENTITIES.has(larkCliIdentity)
+        ? `Lark CLI identity is ${larkCliIdentity}.`
+        : "Lark CLI identity must be bot-only or user-default.",
+      { identityPreset: larkCliIdentity || null },
+    ),
+  );
+
   const service = await profileServiceStatus(selectedName);
   checks.push(
     makeCheck(
@@ -692,6 +947,15 @@ async function presetCommand(options) {
       exitCode: 2,
     });
   }
+  const larkCliIdentity = validateLarkCliIdentity(
+    options["lark-cli-identity"] || preset.larkCli.identityPreset,
+  );
+  if (larkCliIdentity === "user-default" && !options["confirm-user-default"]) {
+    throw new CliError(
+      "The user-default Lark CLI identity requires --confirm-user-default because it permits access to the signed-in user's Lark resources.",
+      { exitCode: 2 },
+    );
+  }
   const agent = validateAgent(options.agent);
   const configPath = configPathFromOptions(options);
   const config = await loadConfig(configPath);
@@ -710,7 +974,8 @@ async function presetCommand(options) {
   nextProfile.workspaces = { ...(nextProfile.workspaces || {}), default: workspace };
   nextProfile.preferences = { ...(nextProfile.preferences || {}), ...preset.preferences };
   nextProfile.access = { ...(nextProfile.access || {}), ...preset.access };
-  nextProfile.larkCli = { ...(nextProfile.larkCli || {}), ...preset.larkCli };
+  const selectedLarkCli = { ...preset.larkCli, identityPreset: larkCliIdentity };
+  nextProfile.larkCli = { ...(nextProfile.larkCli || {}), ...selectedLarkCli };
 
   const changes = {
     profile: profileName,
@@ -720,7 +985,7 @@ async function presetCommand(options) {
     permissions: preset.permissions,
     preferences: preset.preferences,
     access: preset.access,
-    larkCli: preset.larkCli,
+    larkCli: selectedLarkCli,
   };
   const wouldChange = JSON.stringify(nextConfig) !== JSON.stringify(config);
   if (options["dry-run"]) {
@@ -889,10 +1154,13 @@ async function runningProfilesBeforeUpdate(config) {
 }
 
 async function restartProfiles(profiles) {
+  const npm = await resolveNpmCommand();
+  const bridge = await resolveManagedCommand("bridge", npm.command);
+  if (!bridge.available) throw new CliError("Bridge command is unavailable; no profile was restarted.");
   const restarted = [];
   const failed = [];
   for (const profile of profiles) {
-    const result = await runCommand(commandName("bridge"), ["restart", "--profile", profile], { timeoutMs: 60_000 });
+    const result = await runCommand(bridge.command, ["restart", "--profile", profile], { timeoutMs: 60_000 });
     if (result.ok) restarted.push(profile);
     else failed.push(profile);
   }
@@ -905,60 +1173,85 @@ async function restartProfiles(profiles) {
 }
 
 async function updateCommand(options) {
-  const version = parseStableVersion(
-    options["bridge-version"] || (await loadCompatibility()).bridge.testedVersion,
-  );
-  await ensureInstallRequirements();
-  const beforeVersion = await installedBridgeVersion();
+  const compatibility = await loadCompatibility();
+  const bridgeVersion = parseStableVersion(options["bridge-version"] || compatibility.bridge.testedVersion);
+  const larkCliVersion = compatibility.larkCli.testedVersion;
+  const detectedNpm = await resolveNpmCommand();
+  const beforeLarkCliVersion = await installedManagedVersion("larkCli", detectedNpm.command);
+  const beforeBridgeVersion = await installedManagedVersion("bridge", detectedNpm.command);
+  const updateLarkCli = beforeLarkCliVersion !== larkCliVersion;
+  const updateBridge = beforeBridgeVersion !== bridgeVersion;
   const configPath = defaultConfigPath();
   const config = await loadConfig(configPath, { optional: true });
-  const runningProfiles = beforeVersion && config ? await runningProfilesBeforeUpdate(config) : [];
+  const runningProfiles = beforeBridgeVersion && config ? await runningProfilesBeforeUpdate(config) : [];
+
+  if (!updateLarkCli && !updateBridge && !options["dry-run"]) {
+    return {
+      ok: true,
+      command: "update",
+      changed: false,
+      version: bridgeVersion,
+      larkCliVersion,
+      restartedProfiles: [],
+      message: "Official Lark CLI and Bridge are already current; no profile was restarted.",
+    };
+  }
+  const requirements = updateLarkCli || updateBridge
+    ? await ensureInstallRequirements(options)
+    : { npmCommand: null, nodeLtsInstallPlanned: false };
 
   if (options["dry-run"]) {
     return {
       ok: true,
       command: "update",
       dryRun: true,
-      beforeVersion: beforeVersion || null,
-      targetVersion: version,
+      beforeLarkCliVersion: beforeLarkCliVersion || null,
+      beforeBridgeVersion: beforeBridgeVersion || null,
+      targetLarkCliVersion: larkCliVersion,
+      targetBridgeVersion: bridgeVersion,
       runningProfiles,
       stoppedProfiles: config ? profileNames(config).filter((name) => !runningProfiles.includes(name)) : [],
-      plannedActions:
-        beforeVersion === version
-          ? []
-          : [`Install lark-channel-bridge@${version} globally`, ...runningProfiles.map((name) => `Restart profile ${name}`)],
+      plannedActions: [
+        ...(requirements.nodeLtsInstallPlanned
+          ? ["Install the official Node.js LTS package with winget (provides npm)"]
+          : []),
+        ...(updateLarkCli ? [`Install @larksuite/cli@${larkCliVersion} globally`] : []),
+        ...(updateBridge ? [`Install lark-channel-bridge@${bridgeVersion} globally`] : []),
+        ...runningProfiles.map((name) => `Restart profile ${name}`),
+      ],
     };
   }
-  if (beforeVersion === version) {
-    return {
-      ok: true,
-      command: "update",
-      changed: false,
-      version,
-      restartedProfiles: [],
-      message: "Requested version is already installed; no profile was restarted.",
-    };
+  if (updateLarkCli) {
+    await npmInstallPackage(`@larksuite/cli@${larkCliVersion}`, requirements.npmCommand);
   }
-  await npmInstallBridge(version);
-  const afterVersion = await installedBridgeVersion();
-  if (afterVersion !== version) {
-    throw new CliError(`Update finished, but the resolved bridge version is ${afterVersion || "unknown"}; expected ${version}.`);
+  if (updateBridge) {
+    await npmInstallPackage(`lark-channel-bridge@${bridgeVersion}`, requirements.npmCommand);
+  }
+  const afterLarkCliVersion = await installedManagedVersion("larkCli", requirements.npmCommand);
+  const afterBridgeVersion = await installedManagedVersion("bridge", requirements.npmCommand);
+  if (afterLarkCliVersion !== larkCliVersion) {
+    throw new CliError(`Update finished, but the resolved official Lark CLI version is ${afterLarkCliVersion || "unknown"}; expected ${larkCliVersion}.`);
+  }
+  if (afterBridgeVersion !== bridgeVersion) {
+    throw new CliError(`Update finished, but the resolved bridge version is ${afterBridgeVersion || "unknown"}; expected ${bridgeVersion}.`);
   }
   const restartedProfiles = await restartProfiles(runningProfiles);
   return {
     ok: true,
     command: "update",
     changed: true,
-    beforeVersion: beforeVersion || null,
-    version: afterVersion,
+    beforeLarkCliVersion: beforeLarkCliVersion || null,
+    beforeBridgeVersion: beforeBridgeVersion || null,
+    larkCliVersion: afterLarkCliVersion,
+    version: afterBridgeVersion,
     restartedProfiles,
     stoppedProfiles: config ? profileNames(config).filter((name) => !runningProfiles.includes(name)) : [],
-    message: "Only profiles that were running before the update were restarted.",
+    message: "Official Lark CLI and Bridge were updated in order. Only previously running profiles were restarted.",
   };
 }
 
 function helpText() {
-  return `Lark Agent Bridge manager\n\nUsage:\n  node scripts/bridge-manager.mjs preflight [--agent claude|codex] [--json]\n  node scripts/bridge-manager.mjs install [--bridge-version ${DEFAULT_BRIDGE_VERSION}] [--dry-run] [--json]\n  node scripts/bridge-manager.mjs doctor [--profile NAME] [--config PATH] [--json]\n  node scripts/bridge-manager.mjs preset --profile NAME --preset read-only|safe-edit|full --agent claude|codex --workspace PATH [--confirm-full] [--config PATH] [--dry-run] [--json]\n  node scripts/bridge-manager.mjs rules --agent claude|codex --target REPO_ROOT [--dry-run] [--json]\n  node scripts/bridge-manager.mjs update [--bridge-version ${DEFAULT_BRIDGE_VERSION}] [--dry-run] [--json]\n\nThe manager never accepts or prints an App Secret. Use the interactive\nlark-channel-bridge QR/secrets flow for credentials.`;
+  return `Lark Agent Bridge manager\n\nUsage:\n  node scripts/bridge-manager.mjs preflight [--agent claude|codex] [--json]\n  node scripts/bridge-manager.mjs install [--bridge-version ${DEFAULT_BRIDGE_VERSION}] [--install-node-lts] [--dry-run] [--json]\n  node scripts/bridge-manager.mjs doctor [--profile NAME] [--config PATH] [--json]\n  node scripts/bridge-manager.mjs preset --profile NAME --preset read-only|safe-edit|full --agent claude|codex --workspace PATH [--lark-cli-identity bot-only|user-default] [--confirm-user-default] [--confirm-full] [--config PATH] [--dry-run] [--json]\n  node scripts/bridge-manager.mjs rules --agent claude|codex --target REPO_ROOT [--dry-run] [--json]\n  node scripts/bridge-manager.mjs update [--bridge-version ${DEFAULT_BRIDGE_VERSION}] [--install-node-lts] [--dry-run] [--json]\n\nInstall and update always prepare @larksuite/cli@${DEFAULT_LARK_CLI_VERSION} before lark-channel-bridge.\nOn Windows, --install-node-lts uses winget only when npm is unavailable.\nUse it only after the user approves installing the official Node.js LTS package.\nUse user-default only after explaining personal Lark data access and receiving explicit approval.\nThe manager never accepts or prints an App Secret. Use the interactive\nlark-channel-bridge QR/secrets flow for credentials.`;
 }
 
 function printHuman(result) {
@@ -1028,11 +1321,14 @@ if (isEntrypoint) process.exitCode = await main();
 
 export {
   DEFAULT_BRIDGE_VERSION,
+  DEFAULT_LARK_CLI_VERSION,
   MINIMUM_NODE_VERSION,
   atomicConfigUpdate,
   compareVersions,
   isRunningStatus,
   parseOptions,
   redactText,
+  resolveNpmCommand,
   validateWorkspace,
+  windowsNpmCandidates,
 };

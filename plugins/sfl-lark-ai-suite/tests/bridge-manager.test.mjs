@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { windowsNpmCandidates } from "../scripts/bridge-manager.mjs";
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const SCRIPT = path.resolve(TEST_DIR, "../scripts/bridge-manager.mjs");
@@ -61,12 +62,17 @@ function baseConfig(workspace, overrides = {}) {
   };
 }
 
-async function makeFakeCommands(directory, { initialVersion = "0.6.1", runningProfiles = [] } = {}) {
+async function makeFakeCommands(
+  directory,
+  { initialVersion = "0.6.1", initialLarkCliVersion = "1.0.94", runningProfiles = [] } = {},
+) {
   const stateDirectory = path.join(directory, "fake-state");
   const versionFile = path.join(stateDirectory, "version.txt");
+  const larkCliVersionFile = path.join(stateDirectory, "lark-cli-version.txt");
   const logFile = path.join(stateDirectory, "commands.jsonl");
   await mkdir(stateDirectory, { recursive: true });
   await writeFile(versionFile, initialVersion);
+  await writeFile(larkCliVersionFile, initialLarkCliVersion);
   await writeFile(logFile, "");
 
   const bridgeScript = path.join(stateDirectory, "bridge.mjs");
@@ -94,6 +100,23 @@ process.exit(2);
   );
   await chmod(bridgeScript, 0o700);
 
+  const larkCliScript = path.join(stateDirectory, "lark-cli.mjs");
+  await writeFile(
+    larkCliScript,
+    `#!/usr/bin/env node
+import fs from "node:fs";
+const args = process.argv.slice(2);
+fs.appendFileSync(process.env.FAKE_COMMAND_LOG, JSON.stringify({ command: "lark-cli", args }) + "\\n");
+if (args.includes("--version")) {
+  console.log(fs.readFileSync(process.env.FAKE_LARK_CLI_VERSION_FILE, "utf8").trim());
+  process.exit(0);
+}
+process.exit(2);
+`,
+    { mode: 0o700 },
+  );
+  await chmod(larkCliScript, 0o700);
+
   const npmScript = path.join(stateDirectory, "npm.mjs");
   await writeFile(
     npmScript,
@@ -105,34 +128,70 @@ if (args.includes("--version")) {
   console.log("10.8.2");
   process.exit(0);
 }
-const spec = args.find((arg) => arg.startsWith("lark-channel-bridge@"));
-if (!spec) process.exit(2);
-fs.writeFileSync(process.env.FAKE_VERSION_FILE, spec.slice(spec.lastIndexOf("@") + 1));
+const bridgeSpec = args.find((arg) => arg.startsWith("lark-channel-bridge@"));
+const larkCliSpec = args.find((arg) => arg.startsWith("@larksuite/cli@"));
+if (bridgeSpec) fs.writeFileSync(process.env.FAKE_VERSION_FILE, bridgeSpec.slice(bridgeSpec.lastIndexOf("@") + 1));
+else if (larkCliSpec) fs.writeFileSync(process.env.FAKE_LARK_CLI_VERSION_FILE, larkCliSpec.slice(larkCliSpec.lastIndexOf("@") + 1));
+else process.exit(2);
 `,
     { mode: 0o700 },
   );
   await chmod(npmScript, 0o700);
 
   let bridge = bridgeScript;
+  let larkCli = larkCliScript;
   let npm = npmScript;
   if (process.platform === "win32") {
     bridge = path.join(stateDirectory, "bridge.cmd");
+    larkCli = path.join(stateDirectory, "lark-cli.cmd");
     npm = path.join(stateDirectory, "npm.cmd");
     await writeFile(bridge, `@echo off\r\n"${process.execPath}" "${bridgeScript}" %*\r\n`);
+    await writeFile(larkCli, `@echo off\r\n"${process.execPath}" "${larkCliScript}" %*\r\n`);
     await writeFile(npm, `@echo off\r\n"${process.execPath}" "${npmScript}" %*\r\n`);
   }
 
   return {
     LARK_BRIDGE_MANAGER_BRIDGE: bridge,
+    LARK_BRIDGE_MANAGER_LARK_CLI: larkCli,
     LARK_BRIDGE_MANAGER_NPM: npm,
     LARK_BRIDGE_MANAGER_CLAUDE: process.execPath,
     LARK_BRIDGE_MANAGER_CODEX: process.execPath,
     FAKE_COMMAND_LOG: logFile,
     FAKE_VERSION_FILE: versionFile,
+    FAKE_LARK_CLI_VERSION_FILE: larkCliVersionFile,
     FAKE_RUNNING_PROFILES: runningProfiles.join(","),
     logFile,
+    npmSource: npm,
     versionFile,
+    larkCliVersionFile,
   };
+}
+
+async function makeFakeWinget(directory) {
+  const script = path.join(directory, "fake-state", "winget.mjs");
+  await writeFile(
+    script,
+    `#!/usr/bin/env node
+import fs from "node:fs";
+import path from "node:path";
+const args = process.argv.slice(2);
+fs.appendFileSync(process.env.FAKE_COMMAND_LOG, JSON.stringify({ command: "winget", args }) + "\\n");
+if (args.includes("--version")) {
+  console.log("v1.9.0");
+  process.exit(0);
+}
+if (args[0] !== "install" || !args.includes("OpenJS.NodeJS.LTS")) process.exit(2);
+fs.mkdirSync(path.dirname(process.env.FAKE_NPM_DEST), { recursive: true });
+fs.copyFileSync(process.env.FAKE_NPM_SOURCE, process.env.FAKE_NPM_DEST);
+fs.chmodSync(process.env.FAKE_NPM_DEST, 0o700);
+`,
+    { mode: 0o700 },
+  );
+  await chmod(script, 0o700);
+  if (process.platform !== "win32") return script;
+  const command = path.join(directory, "fake-state", "winget.cmd");
+  await writeFile(command, `@echo off\r\n"${process.execPath}" "${script}" %*\r\n`);
+  return command;
 }
 
 async function commandLog(file) {
@@ -326,6 +385,42 @@ test("full preset requires explicit confirmation", async () => {
   assert.equal(updated.profiles.alpha.permissions.maxAccess, "full");
 });
 
+test("user-default Lark CLI identity requires explicit confirmation", async () => {
+  const root = await tempDirectory();
+  const state = path.join(root, "state");
+  const workspace = path.join(root, "workspace");
+  const configPath = path.join(state, "config.json");
+  await mkdir(workspace, { recursive: true });
+  const original = baseConfig(workspace);
+  original.profiles.alpha.larkCli.identityPreset = "bot-only";
+  await writeJson(configPath, original);
+  const commonArgs = [
+    "preset",
+    "--profile",
+    "alpha",
+    "--preset",
+    "safe-edit",
+    "--agent",
+    "claude",
+    "--workspace",
+    workspace,
+    "--lark-cli-identity",
+    "user-default",
+    "--json",
+  ];
+  const env = { HOME: path.join(root, "home"), LARK_CHANNEL_HOME: state, TEST_CWD: root };
+
+  const rejected = runManager(commonArgs, env);
+  assert.equal(rejected.status, 2);
+  assert.match(JSON.parse(rejected.stdout).error, /--confirm-user-default/);
+  assert.deepEqual(JSON.parse(await readFile(configPath, "utf8")), original);
+
+  const confirmed = runManager([...commonArgs.slice(0, -1), "--confirm-user-default", "--json"], env);
+  assert.equal(confirmed.status, 0, confirmed.stderr || confirmed.stdout);
+  const updated = JSON.parse(await readFile(configPath, "utf8"));
+  assert.equal(updated.profiles.alpha.larkCli.identityPreset, "user-default");
+});
+
 test("rules appends a managed CLAUDE block, preserves manual text, and is idempotent", async () => {
   const root = await tempDirectory();
   const repository = path.join(root, "repository");
@@ -492,8 +587,93 @@ test("preflight JSON reports the Node minimum and selected agent", async () => {
   assert.equal(result.status, 0, result.stderr || result.stdout);
   const payload = JSON.parse(result.stdout);
   assert.equal(payload.ok, true);
+  assert.equal(payload.checks.find((check) => check.name === "os").status, "pass");
   assert.equal(payload.checks.find((check) => check.name === "node").minimumVersion, "20.12.0");
+  assert.equal(payload.checks.find((check) => check.name === "lark-cli").status, "pass");
   assert.equal(payload.checks.find((check) => check.name === "agent:codex").status, "pass");
+});
+
+test("install prepares the official Lark CLI before Bridge", async () => {
+  const root = await tempDirectory();
+  const fake = await makeFakeCommands(root, {
+    initialVersion: "0.6.1",
+    initialLarkCliVersion: "1.0.0",
+  });
+  const result = runManager(["install", "--json"], {
+    HOME: path.join(root, "home"),
+    ...fake,
+  });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.equal((await readFile(fake.larkCliVersionFile, "utf8")).trim(), "1.0.94");
+  assert.equal((await readFile(fake.versionFile, "utf8")).trim(), "0.7.1");
+  const installs = (await commandLog(fake.logFile)).filter(
+    (entry) => entry.command === "npm" && entry.args[0] === "install",
+  );
+  assert.deepEqual(
+    installs.map((entry) => entry.args.at(-1)),
+    ["@larksuite/cli@1.0.94", "lark-channel-bridge@0.7.1"],
+  );
+});
+
+test("Windows npm resolution includes the standard Node.js installation locations", () => {
+  const candidates = windowsNpmCandidates({
+    ProgramFiles: "C:\\Program Files",
+    LOCALAPPDATA: "C:\\Users\\test\\AppData\\Local",
+    APPDATA: "C:\\Users\\test\\AppData\\Roaming",
+    NVM_SYMLINK: "C:\\nvm\\current",
+  });
+  assert.equal(candidates.includes(path.resolve("C:\\Program Files", "nodejs", "npm.cmd")), true);
+  assert.equal(candidates.includes(path.resolve("C:\\Users\\test\\AppData\\Local", "Programs", "nodejs", "npm.cmd")), true);
+  assert.equal(candidates.includes(path.resolve("C:\\nvm\\current", "npm.cmd")), true);
+});
+
+test("Windows install reports the explicit Node LTS repair flag when npm is unavailable", async () => {
+  const root = await tempDirectory();
+  const fake = await makeFakeCommands(root, { initialVersion: "0.6.1" });
+  const missingNpm = path.join(root, "repaired-node", "npm.cmd");
+  const result = runManager(["install", "--json"], {
+    HOME: path.join(root, "home"),
+    LARK_BRIDGE_MANAGER_TEST_PLATFORM: "win32",
+    ...fake,
+    LARK_BRIDGE_MANAGER_NPM: missingNpm,
+  });
+  assert.equal(result.status, 1);
+  const payload = JSON.parse(result.stdout);
+  assert.match(payload.error, /npm is unavailable on Windows/);
+  assert.equal(payload.details.repairFlag, "--install-node-lts");
+  assert.equal(payload.details.packageId, "OpenJS.NodeJS.LTS");
+  const log = await commandLog(fake.logFile);
+  assert.equal(log.some((entry) => entry.command === "npm" && entry.args.includes("install")), false);
+});
+
+test("Windows install can repair missing npm with approved official Node LTS installation", async () => {
+  const root = await tempDirectory();
+  const fake = await makeFakeCommands(root, { initialVersion: "0.6.1" });
+  const winget = await makeFakeWinget(root);
+  const repairedNpm = path.join(root, "repaired-node", process.platform === "win32" ? "npm.cmd" : "npm.mjs");
+  const result = runManager(["install", "--install-node-lts", "--json"], {
+    HOME: path.join(root, "home"),
+    LARK_BRIDGE_MANAGER_TEST_PLATFORM: "win32",
+    ...fake,
+    LARK_BRIDGE_MANAGER_NPM: repairedNpm,
+    LARK_BRIDGE_MANAGER_WINGET: winget,
+    FAKE_NPM_SOURCE: fake.npmSource,
+    FAKE_NPM_DEST: repairedNpm,
+  });
+  const repairedNpmCheck = spawnSync(repairedNpm, ["--version"], {
+    env: {
+      ...process.env,
+      FAKE_COMMAND_LOG: fake.logFile,
+      FAKE_VERSION_FILE: fake.versionFile,
+    },
+    encoding: "utf8",
+  });
+  assert.equal(repairedNpmCheck.status, 0, repairedNpmCheck.stderr || repairedNpmCheck.stdout);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.equal((await readFile(fake.versionFile, "utf8")).trim(), "0.7.1");
+  const log = await commandLog(fake.logFile);
+  assert.equal(log.some((entry) => entry.command === "winget" && entry.args.includes("OpenJS.NodeJS.LTS")), true);
+  assert.equal(log.some((entry) => entry.command === "npm" && entry.args.includes("install")), true);
 });
 
 test("preflight recommends update when Bridge is below compatibility minimum", async () => {
