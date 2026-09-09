@@ -134,7 +134,7 @@ Bridgeの接続確認後、議事録Pluginを別に追加します。
 ## 開発と検証
 
 ```bash
-node --test plugins/lark-agent-bridge/tests/*.test.mjs plugins/sfl-gijiroku/tests/*.test.mjs
+node --test plugins/lark-agent-bridge/tests/bridge-manager.test.mjs plugins/sfl-gijiroku/tests/gijiroku-config.test.mjs plugins/sfl-gijiroku/tests/gijiroku-document.test.mjs
 node scripts/validate-gijiroku-plugin.mjs
 python3 /path/to/plugin-creator/scripts/validate_plugin.py plugins/lark-agent-bridge
 python3 /path/to/plugin-creator/scripts/validate_plugin.py plugins/sfl-gijiroku

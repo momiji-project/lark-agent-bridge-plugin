@@ -667,6 +667,7 @@ test("Windows install can repair missing npm with approved official Node LTS ins
       FAKE_VERSION_FILE: fake.versionFile,
     },
     encoding: "utf8",
+    shell: process.platform === "win32",
   });
   assert.equal(repairedNpmCheck.status, 0, repairedNpmCheck.stderr || repairedNpmCheck.stdout);
   assert.equal(result.status, 0, result.stderr || result.stdout);

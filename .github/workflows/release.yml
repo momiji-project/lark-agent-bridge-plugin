@@ -21,7 +21,7 @@ jobs:
           node scripts/validate-repository.mjs
           node scripts/validate-unified-plugin.mjs
           node scripts/validate-gijiroku-plugin.mjs
-          node --test plugins/lark-agent-bridge/tests/*.test.mjs plugins/sfl-lark-ai-suite/tests/*.test.mjs plugins/sfl-gijiroku/tests/*.test.mjs
+          node --test plugins/lark-agent-bridge/tests/bridge-manager.test.mjs plugins/sfl-lark-ai-suite/tests/bridge-manager.test.mjs plugins/sfl-lark-ai-suite/tests/gijiroku-config.test.mjs plugins/sfl-lark-ai-suite/tests/gijiroku-document.test.mjs plugins/sfl-gijiroku/tests/gijiroku-config.test.mjs plugins/sfl-gijiroku/tests/gijiroku-document.test.mjs
       - name: Verify tag matches manifest
         run: |
           expected="v$(node -p "require('./plugins/lark-agent-bridge/.codex-plugin/plugin.json').version")"

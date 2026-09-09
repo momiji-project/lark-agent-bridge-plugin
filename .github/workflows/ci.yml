@@ -22,7 +22,14 @@ jobs:
           node scripts/validate-unified-plugin.mjs
           node scripts/validate-gijiroku-plugin.mjs
       - name: Test Bridge manager
-        run: node --test plugins/lark-agent-bridge/tests/*.test.mjs plugins/sfl-lark-ai-suite/tests/*.test.mjs plugins/sfl-gijiroku/tests/*.test.mjs
+        run: >-
+          node --test
+          plugins/lark-agent-bridge/tests/bridge-manager.test.mjs
+          plugins/sfl-lark-ai-suite/tests/bridge-manager.test.mjs
+          plugins/sfl-lark-ai-suite/tests/gijiroku-config.test.mjs
+          plugins/sfl-lark-ai-suite/tests/gijiroku-document.test.mjs
+          plugins/sfl-gijiroku/tests/gijiroku-config.test.mjs
+          plugins/sfl-gijiroku/tests/gijiroku-document.test.mjs
       - name: Check for common secret patterns
         run: |
           if grep -RInE --exclude-dir=.git --exclude='*.md' 'cli_[A-Za-z0-9]{16,}' . || \
@@ -43,4 +50,11 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node }}
-      - run: node --test plugins/lark-agent-bridge/tests/*.test.mjs plugins/sfl-lark-ai-suite/tests/*.test.mjs plugins/sfl-gijiroku/tests/*.test.mjs
+      - run: >-
+          node --test
+          plugins/lark-agent-bridge/tests/bridge-manager.test.mjs
+          plugins/sfl-lark-ai-suite/tests/bridge-manager.test.mjs
+          plugins/sfl-lark-ai-suite/tests/gijiroku-config.test.mjs
+          plugins/sfl-lark-ai-suite/tests/gijiroku-document.test.mjs
+          plugins/sfl-gijiroku/tests/gijiroku-config.test.mjs
+          plugins/sfl-gijiroku/tests/gijiroku-document.test.mjs
