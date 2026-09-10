@@ -25,7 +25,7 @@ Options:
   --agent codex|claude    Agent used by this Bridge profile.
   --workspace PATH        Workspace exposed to the agent.
   --profile NAME          Bridge profile name (default: sfl-lark).
-  --personal-lark         Allow signed-in user access for Minutes/documents.
+  --personal-lark         Enable Minutes/documents with QR device authorization.
   --bot-only              Limit Lark CLI access to bot credentials.
   --install-node-lts      Approve Node.js LTS installation if required.
   --reuse-profile         Reuse the named profile if it already exists.
@@ -172,7 +172,7 @@ ensure_personal_lark_auth() {
     return 34
   fi
 
-  printf '\nMinutesとLarkドキュメントを使うため、このBridge専用のLarkユーザー認証を行います。\n'
+  printf '\nMinutesとLarkドキュメントを使うため、QR方式のLarkユーザー認証を行います。\n'
   AUTH_TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/lark-bridge-auth.XXXXXX")"
   auth_json="$AUTH_TEMP_DIR/auth.json"
   completion_json="$AUTH_TEMP_DIR/completion.json"
@@ -214,14 +214,19 @@ ensure_personal_lark_auth() {
     return 34
   fi
 
-  printf '\n次のURLをブラウザで開き、Larkで許可してください。\n%s\n' "$verification_url"
+  printf '\nQRコードをLarkを利用する端末で読み取り、許可してください。\n'
+  printf 'QRを読み取れない場合は、次の同じ認証URLを開けます。\n%s\n' "$verification_url"
+  qr_path=""
   if (cd "$AUTH_TEMP_DIR" && run_profile_lark_cli auth qrcode "$verification_url" --output lark-auth.png >/dev/null 2>&1); then
-    printf 'QRコード: %s\n' "$AUTH_TEMP_DIR/lark-auth.png"
-  fi
-  if command -v open >/dev/null 2>&1; then
-    open "$verification_url" >/dev/null 2>&1 || true
-  elif command -v xdg-open >/dev/null 2>&1; then
-    xdg-open "$verification_url" >/dev/null 2>&1 || true
+    qr_path="$AUTH_TEMP_DIR/lark-auth.png"
+    printf 'QRコード: %s\n' "$qr_path"
+    if command -v open >/dev/null 2>&1; then
+      open "$qr_path" >/dev/null 2>&1 || true
+    elif command -v xdg-open >/dev/null 2>&1; then
+      xdg-open "$qr_path" >/dev/null 2>&1 || true
+    fi
+  else
+    printf 'QRコード画像を生成できなかったため、上記URLを使用してください。\n'
   fi
 
   printf '承認を待っています。このTerminalは閉じないでください。\n'
@@ -330,7 +335,7 @@ if ! printf '%s' "$PROFILE_NAME" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$'; 
 fi
 
 if [ -z "$LARK_SCOPE" ]; then
-  if is_interactive && ask_yes_no 'このBridgeでMinutesや個人ドキュメントを利用しますか？ [y/N]' no; then
+  if is_interactive && ask_yes_no 'このBridgeを議事録（Minutes・Larkドキュメント）にも使いますか？ [y/N]' no; then
     LARK_SCOPE="user-default"
   else
     LARK_SCOPE="bot-only"
@@ -347,9 +352,14 @@ if [ -z "$BRIDGE_COMMAND" ] || [ -z "$NODE_COMMAND" ] || [ -z "$LARK_CLI_COMMAND
 fi
 
 PROFILE_EXISTS=0
+PROFILE_WAS_RUNNING=0
 PROFILE_LIST="$("$BRIDGE_COMMAND" profile list 2>/dev/null || true)"
 if printf '%s\n' "$PROFILE_LIST" | awk -v profile="$PROFILE_NAME" 'NR > 1 { for (i = 1; i <= NF; i++) if ($i == profile) found = 1 } END { exit(found ? 0 : 1) }'; then
   PROFILE_EXISTS=1
+  PROFILE_STATUS="$("$BRIDGE_COMMAND" status --profile "$PROFILE_NAME" 2>/dev/null || true)"
+  if printf '%s\n' "$PROFILE_STATUS" | grep -Eiq '正在后台运行|is (currently )?running in the background|background service is running|バックグラウンドで実行中|(^|[[:space:]])(process[[:space:]]*id|pid|プロセス[[:space:]]*id)[[:space:]]*[:=][[:space:]]*[0-9]+'; then
+    PROFILE_WAS_RUNNING=1
+  fi
 fi
 
 if [ "$PROFILE_EXISTS" -eq 1 ] && [ "$REUSE_PROFILE" -ne 1 ]; then
@@ -374,16 +384,15 @@ if [ "$PROFILE_EXISTS" -eq 0 ]; then
 fi
 
 if [ "$LARK_SCOPE" = "user-default" ]; then
+  ensure_personal_lark_auth
   "$NODE_COMMAND" "$MANAGER" preset --profile "$PROFILE_NAME" --preset safe-edit --agent "$AGENT" --workspace "$WORKSPACE" --lark-cli-identity user-default --confirm-user-default
 else
   "$NODE_COMMAND" "$MANAGER" preset --profile "$PROFILE_NAME" --preset safe-edit --agent "$AGENT" --workspace "$WORKSPACE" --lark-cli-identity bot-only
 fi
-
-"$BRIDGE_COMMAND" start --profile "$PROFILE_NAME"
-if [ "$LARK_SCOPE" = "user-default" ]; then
-  ensure_personal_lark_auth
-  "$NODE_COMMAND" "$MANAGER" preset --profile "$PROFILE_NAME" --preset safe-edit --agent "$AGENT" --workspace "$WORKSPACE" --lark-cli-identity user-default --confirm-user-default
+if [ "$PROFILE_WAS_RUNNING" -eq 1 ]; then
   "$BRIDGE_COMMAND" restart --profile "$PROFILE_NAME"
+else
+  "$BRIDGE_COMMAND" start --profile "$PROFILE_NAME"
 fi
 "$NODE_COMMAND" "$MANAGER" doctor --profile "$PROFILE_NAME" --json
 "$BRIDGE_COMMAND" status --profile "$PROFILE_NAME"

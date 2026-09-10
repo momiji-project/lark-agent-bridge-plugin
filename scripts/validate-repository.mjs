@@ -63,6 +63,29 @@ requireValue(shellTerminalSetupStat.isFile(), 'macOS terminal setup must be a re
 requireValue((shellTerminalSetupStat.mode & 0o111) !== 0, 'macOS terminal setup must be executable')
 requireValue((await lstat(windowsTerminalSetup)).isFile(), 'Windows terminal setup must be a regular file')
 
+function requireOrderedSnippets(source, snippets, label) {
+  let cursor = -1
+  for (const snippet of snippets) {
+    const index = source.indexOf(snippet, cursor + 1)
+    requireValue(index > cursor, `${label}: expected ordered setup action ${snippet}`)
+    if (index > cursor) cursor = index
+  }
+}
+
+const shellTerminalSource = await readFile(shellTerminalSetup, 'utf8')
+const windowsTerminalSource = await readFile(windowsTerminalSetup, 'utf8')
+for (const [label, source, executionStart, markers] of [
+  ['macOS/Linux terminal setup', shellTerminalSource, 'if [ "$PROFILE_EXISTS" -eq 0 ]', ['ensure_personal_lark_auth', 'preset --profile', 'start --profile']],
+  ['Windows terminal setup', windowsTerminalSource, 'if (-not $profileExists)', ['Enable-PersonalLarkAccess', '$Manager, "preset"', '& $bridge start']],
+]) {
+  requireValue(source.includes('auth login --domain minutes --domain docs --no-wait --json'), `${label}: missing fixed Minutes/Docs device-flow start`)
+  requireValue(source.includes('auth qrcode'), `${label}: missing QR generation`)
+  requireValue(source.includes('auth login --device-code'), `${label}: missing device-flow completion`)
+  const executionIndex = source.lastIndexOf(executionStart)
+  requireValue(executionIndex >= 0, `${label}: setup execution block not found`)
+  requireOrderedSnippets(executionIndex >= 0 ? source.slice(executionIndex) : '', markers, label)
+}
+
 const presetNames = ['read-only', 'safe-edit', 'full']
 for (const name of presetNames) {
   const preset = await readJson(join(pluginRoot, 'assets', 'presets', `${name}.json`))

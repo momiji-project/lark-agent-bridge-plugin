@@ -47,7 +47,8 @@ Bridgeが未設定または不完全な場合だけ、同梱の `lark-bridge-set
 - 作業フォルダは現在の安全なプロジェクトルートを候補として示し、確定できない場合だけ聞く。`/`、ホーム、システム領域、一時領域は拒否する。
 - 権限は `safe-edit` を既定にする。`full` は明示的な承認がある場合だけ使う。
 - インストールはdry-runを表示してから実行する。
-- QR登録はユーザー自身に承認してもらう。App Secretをチャットへ貼らせない。
+- Bridge登録は上流のQR方式を既定に固定し、ユーザー自身に承認してもらう。App Secretをチャットへ貼らせない。QRが読めない場合だけ同一URLを使う。
+- 議事録を選んだ場合は、Bridgeを起動する前にMinutes/DocsのQR付きデバイスフローを完了し、scope検証後だけ `user-default` を適用する。
 - 新しく設定したプロファイルだけを起動する。既存の停止中プロファイルを勝手に起動しない。
 
 ### 3. 議事録を準備する
@@ -75,7 +76,7 @@ node <plugin-root>/scripts/bridge-manager.mjs doctor --profile <profile> --json
 lark-channel-bridge status --profile <profile>
 ```
 
-Lark Minutesのuser認証が無い場合は、グループチャットで開始せずBotとの個人チャットへ案内する。`lark-cli auth login --domain minutes --no-wait --json` のURLを改変せず提示し、承認後にdevice codeを使って完了する。
+Lark Minutesのuser認証が無い場合は、グループチャットで開始せずBotとの個人チャットへ案内する。認証方式は質問せず、`lark-cli auth login --domain minutes --domain docs --no-wait --json` のURLを改変せず予備リンクとして提示し、PNGのQRコードを主な認証手段として表示する。そのターンは終了し、ユーザーが承認を伝えた次のターンでAI自身がdevice codeによる完了とscope再検証を行う。失効した認証情報は再利用しない。
 
 最後にユーザーへLarkで次を送ってもらう。
 

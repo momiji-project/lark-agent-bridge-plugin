@@ -164,7 +164,7 @@ function Enable-PersonalLarkAccess {
   }
 
   Write-Host ""
-  Write-Host "MinutesとLarkドキュメントを使うため、このBridge専用のLarkユーザー認証を行います。"
+  Write-Host "MinutesとLarkドキュメントを使うため、QR方式のLarkユーザー認証を行います。"
   Set-ProfileLarkEnvironment -BridgeHome $BridgeHome -BridgeProfile $BridgeProfile
   $authDir = Join-Path ([IO.Path]::GetTempPath()) ("lark-bridge-auth-" + [Guid]::NewGuid().ToString("N"))
   New-Item -ItemType Directory -Path $authDir | Out-Null
@@ -179,16 +179,26 @@ function Enable-PersonalLarkAccess {
     if (-not $verificationUrl -or -not $deviceCode) { throw "認証URLを取得できませんでした。" }
 
     Write-Host ""
-    Write-Host "次のURLをブラウザで開き、Larkで許可してください。"
+    Write-Host "QRコードをLarkを利用する端末で読み取り、許可してください。"
+    Write-Host "QRを読み取れない場合は、次の同じ認証URLを開けます。"
     Write-Host $verificationUrl
+    $qrPath = Join-Path $authDir "lark-auth.png"
+    $qrCreated = $false
     Push-Location $authDir
     try {
       & $LarkCli auth qrcode $verificationUrl --output "lark-auth.png" *> $null
-      if ($LASTEXITCODE -eq 0) { Write-Host "QRコード: $(Join-Path $authDir 'lark-auth.png')" }
+      if ($LASTEXITCODE -eq 0) {
+        $qrCreated = $true
+        Write-Host "QRコード: $qrPath"
+      }
     } finally {
       Pop-Location
     }
-    try { Start-Process $verificationUrl | Out-Null } catch { }
+    if ($qrCreated) {
+      try { Start-Process $qrPath | Out-Null } catch { }
+    } else {
+      Write-Host "QRコード画像を生成できなかったため、上記URLを使用してください。"
+    }
 
     Write-Host "承認を待っています。このPowerShellは閉じないでください。"
     & $LarkCli auth login --device-code $deviceCode --json 1> $completionFile
@@ -300,7 +310,7 @@ $larkCliIdentity = "bot-only"
 if ($PersonalLark) {
   $larkCliIdentity = "user-default"
 } elseif (-not $BotOnly) {
-  if (Confirm-Action -Prompt "このBridgeでMinutesや個人ドキュメントを利用しますか？ [y/N]") {
+  if (Confirm-Action -Prompt "このBridgeを議事録（Minutes・Larkドキュメント）にも使いますか？ [y/N]") {
     $larkCliIdentity = "user-default"
   }
 }
@@ -317,6 +327,11 @@ if (-not $bridge -or -not $node -or -not $larkCli) {
 $profileOutput = & $bridge profile list 2>$null
 $escapedProfile = [regex]::Escape($ProfileName)
 $profileExists = ($profileOutput | Where-Object { $_ -match "(^|\s)$escapedProfile(\s|$)" }).Count -gt 0
+$profileWasRunning = $false
+if ($profileExists) {
+  $profileStatus = (& $bridge status --profile $ProfileName 2>$null | Out-String)
+  $profileWasRunning = $profileStatus -match "正在后台运行|is (currently )?running in the background|background service is running|バックグラウンドで実行中|(^|\s)(process\s*id|pid|プロセス\s*id)\s*[:=]\s*\d+"
+}
 if ($profileExists -and -not $ReuseProfile) {
   if (Confirm-Action -Prompt "既存プロファイル $ProfileName を再利用しますか？ [y/N]") {
     $ReuseProfile = $true
@@ -343,6 +358,9 @@ if (-not $profileExists) {
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
+if ($larkCliIdentity -eq "user-default") {
+  Enable-PersonalLarkAccess -LarkCli $larkCli -BridgeHome $bridgeHome -BridgeProfile $ProfileName
+}
 $presetArguments = @(
   $Manager, "preset",
   "--profile", $ProfileName,
@@ -355,15 +373,12 @@ if ($larkCliIdentity -eq "user-default") { $presetArguments += "--confirm-user-d
 & $node @presetArguments
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-& $bridge start --profile $ProfileName
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-if ($larkCliIdentity -eq "user-default") {
-  Enable-PersonalLarkAccess -LarkCli $larkCli -BridgeHome $bridgeHome -BridgeProfile $ProfileName
-  & $node @presetArguments
-  if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($profileWasRunning) {
   & $bridge restart --profile $ProfileName
-  if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+} else {
+  & $bridge start --profile $ProfileName
 }
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & $node $Manager doctor --profile $ProfileName --json
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & $bridge status --profile $ProfileName

@@ -19,7 +19,8 @@ Explain the configuration boundary first:
 3. Choose one preset: `read-only`, `safe-edit` (default), or `full` (explicit confirmation required).
 4. Choose the Lark CLI identity independently from filesystem permissions.
    - Keep `bot-only` unless the user needs personal Lark resources.
-   - Minutes and personal documents require `user-default`. Explain the additional reach and obtain explicit approval before adding `--lark-cli-identity user-default --confirm-user-default`.
+   - Minutes and personal documents require `user-default`. Explain the additional reach and obtain explicit approval first. Before changing the preset, complete the same profile-private QR device flow defined by `lark-bridge-setup`: start with `auth login --domain minutes --domain docs --no-wait --json`, show the exact URL plus PNG QR, end the turn, then after the user confirms run `auth login --device-code` yourself and verify the required scopes. Only then add `--lark-cli-identity user-default --confirm-user-default`.
+   - Do not offer App Secret entry or another OAuth method as a normal alternative. If the QR is unreadable, use its unchanged verification URL as the fallback.
 5. Keep the model at `default` unless the user names a model. Do not copy model IDs between Claude and Codex.
 6. Preview the exact change:
 

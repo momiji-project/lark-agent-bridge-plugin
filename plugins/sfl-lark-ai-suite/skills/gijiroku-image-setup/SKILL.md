@@ -132,10 +132,12 @@ Bridge実行中は `LARK_CHANNEL_PROFILE` が自動的に設定プロファイ�
 <plugin-root>/scripts/selfcheck.sh
 ```
 
-`lark-cli auth status --json --verify` でuser認証が無い場合は、個人チャットで次の二段階認証を行う。
+`lark-cli auth status --json --verify` でuser認証が無い場合は、個人チャットで次の二段階認証を行う。認証方式は質問せず、QR付きデバイスフローを通常経路として固定する。QRが読めない場合だけ同一URLを予備経路として使う。
 
-1. `lark-cli auth login --domain minutes --no-wait --json`
-2. 返されたURLを改変せず提示し、QRコードも生成する。
-3. ユーザーが承認完了を伝えた次のターンで `lark-cli auth login --device-code <device_code>` をAI自身が実行する。
+1. `lark-cli auth login --domain minutes --domain docs --no-wait --json`
+2. 返されたURLを改変せず予備リンクとして提示し、PNGのQRコードを主な認証手段として表示する。
+3. 承認後に知らせるよう伝えてそのターンを終了し、同じターンでdevice codeの待機を始めない。
+4. ユーザーが承認完了を伝えた次のターンで `lark-cli auth login --device-code <device_code> --json` をAI自身が実行する。
+5. `auth status --json --verify` を再実行し、Minutes/Docsのscopeを確認する。失効したURLやdevice codeは再利用しない。
 
 セットアップ完了時は、Larkドキュメントと共有用画像が両方返ること、選んだ起動範囲、登録した言い方に沿った依頼例を2つ示す。Bridge側の追加設定は不要で、次のLarkメッセージから利用できると案内する。

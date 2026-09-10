@@ -1,6 +1,6 @@
 {
   "name": "sfl-lark-ai-suite",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Lark IMとAIエージェントを接続し、MinutesからLarkドキュメントと共有用画像の議事録を作る機能を一つにまとめて導入・設定します。",
   "author": {
     "name": "Salon Flow Love"

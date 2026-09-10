@@ -3,8 +3,8 @@
   "name": "momiji-lark-tools",
   "description": "LarkからClaude CodeまたはCodexを安全に利用するための導入・設定プラグイン",
   "owner": {
-    "name": "momiji-project",
-    "url": "https://github.com/momiji-project"
+    "name": "Salon Flow Love",
+    "url": "https://sfl-lark-ai-bridge-guide.pages.dev/"
   },
   "plugins": [
     {

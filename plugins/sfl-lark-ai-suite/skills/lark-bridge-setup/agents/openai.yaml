@@ -1,4 +1,4 @@
 interface:
   display_name: "Lark Bridge 初期設定"
-  short_description: "Lark Bridgeを安全に導入し、Larkとの疎通まで案内"
-  default_prompt: "Lark BridgeをこのPCに初期設定してください"
+  short_description: "環境診断からQR認証・疎通確認まで一括設定"
+  default_prompt: "$lark-bridge-setup を使い、このPCを自動診断してQR認証でLark Bridgeを初期設定してください"

@@ -11,8 +11,9 @@ Lark / Feishu からローカルのClaude CodeまたはCodexを利用するた�
 3. Node.js 20.12以上とnpmを確認し、必要ならセットアップ内でNode.js LTSを導入
 4. Lark公式CLI `@larksuite/cli` を確認・導入
 5. `lark-channel-bridge` を確認・導入
-6. Bridgeプロファイルを作成し、Lark IMの往復を確認
-7. 議事録が必要な利用者だけ、別Plugin `sfl-gijiroku` を追加
+6. BridgeプロファイルをQR登録し、Lark IMの往復を確認
+7. 議事録を使う場合だけ、QR付きデバイスフローでMinutes/Docsを認証
+8. 議事録が必要な利用者だけ、別Plugin `sfl-gijiroku` を追加
 
 最初にMarketplaceを登録し、Bridge専用Pluginを導入します。
 
@@ -41,17 +42,17 @@ if (-not $setup) { throw "lark-agent-bridge Pluginが見つかりません。先
 powershell -NoProfile -ExecutionPolicy Bypass -File $setup.FullName
 ```
 
-このウィザードがNode.js/npm、Lark公式CLI、Bridge、プロファイル、権限、起動、診断までを順番に処理します。Node.jsの追加、既存プロファイルの再利用、個人Larkデータへのアクセスは、ターミナル上で確認してから実行します。MinutesやLarkドキュメントを使う選択をした場合は、Bridge専用のLarkユーザー認証URLとQRコードを表示し、承認後に権限を再検査します。
+このウィザードがNode.js/npm、Lark公式CLI、Bridge、プロファイル、権限、起動、診断までを順番に処理します。Node.jsの追加、既存プロファイルの再利用、個人Larkデータへのアクセスは、ターミナル上で確認してから実行します。認証方式は選択させず、Bridge登録はQR、Minutes/DocsはQR付きデバイスフローに固定します。ユーザー認証とscope検証が通ってから `user-default` を適用し、新規または停止中のプロファイルを起動します。明示的に再利用した稼働中プロファイルは、その一つだけを再起動します。QRを読み取れない場合は、表示した同一URLを予備経路として使用できます。
 
 ### エージェントへ依頼する場合
 
 新しいセッションでBridgeを設定します。
 
 ```text
-$lark-bridge-setup Lark BridgeをこのPCに初期設定してください
+$lark-bridge-setup このPCを診断し、QR認証でLark Bridgeを初期設定してください。議事録も使います
 ```
 
-Bridgeの疎通確認が終わった後、議事録が必要な場合だけ専用Pluginを追加します。Minutesと個人ドキュメントを使うプロファイルでは、土台側の設定時に追加範囲を説明し、明示承認を得てLark CLI identityを`user-default`にします。議事録Plugin自身はBridge設定を変更しません。
+Bridgeの疎通確認が終わった後、議事録が必要な場合だけ専用Pluginを追加します。Minutesと個人ドキュメントを使うプロファイルでは、土台側の設定時に追加範囲を説明し、明示承認後にQR付きデバイスフローを完了してからLark CLI identityを`user-default`にします。議事録Plugin自身はBridge設定を変更しません。
 
 ```bash
 codex plugin add sfl-gijiroku@momiji-lark-tools
@@ -73,6 +74,7 @@ Bridge本体は再実装せず、Lark公式のChannel SDKを基盤にするMIT�
 - WindowsとmacOSでNode.jsが無い初期状態から始めるOSネイティブのブートストラップ
 - Lark公式CLIをBridgeより先に導入する順序制御
 - Lark PersonalAgentのQR登録とプロファイル作成
+- Minutes/DocsのQR付きデバイスフローと認証後scope検証
 - `read-only` / `safe-edit` / `full` の権限プリセット
 - Bridgeで使う `CLAUDE.md` / `AGENTS.md` の管理ブロック生成
 - 秘密情報を表示しないread-only診断

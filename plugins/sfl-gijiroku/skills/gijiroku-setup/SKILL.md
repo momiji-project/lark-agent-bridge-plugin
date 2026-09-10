@@ -132,12 +132,14 @@ Bridge実行中は `LARK_CHANNEL_PROFILE` が自動的に設定プロファイ�
 node <plugin-root>/scripts/selfcheck.mjs
 ```
 
-`lark-cli auth status --json --verify` でuser認証が無い場合は、個人チャットで次の二段階認証を行う。
+`lark-cli auth status --json --verify` でuser認証が無い場合は、個人チャットで次の二段階認証を行う。認証方式は質問せず、QR付きデバイスフローを通常経路として固定する。QRを読み取れない場合だけ、QRと同一のURLを予備経路として使う。
 
 先に、現在のBridgeプロファイルの `larkCli.identityPreset` が `user-default` であることを確認する。`bot-only` の場合、このPluginはBridge設定を変更せず、Bridge専用Pluginの `lark-bridge-agent-config` で追加権限の説明と明示承認を行ってから `user-default` へ変更するよう案内して停止する。Bridgeの再起動と疎通確認が終わるまで、議事録設定を完了扱いにしない。
 
 1. `lark-cli auth login --domain minutes --domain docs --no-wait --json`
-2. 返されたURLを改変せず提示し、QRコードも生成する。
-3. ユーザーが承認完了を伝えた次のターンで `lark-cli auth login --device-code <device_code>` をAI自身が実行する。
+2. 返されたURLを改変せず予備リンクとして提示し、PNGのQRコードを生成して主な認証手段として表示する。
+3. 「承認後にこのチャットへ戻って知らせてください」と伝え、そのターンを終了する。同じターンでdevice codeの待機を始めない。
+4. ユーザーが承認完了を伝えた次のターンで `lark-cli auth login --device-code <device_code> --json` をAI自身が実行する。
+5. `lark-cli auth status --json --verify` を再実行し、Minutes/Docsに必要なscopeが揃った場合だけ完了とする。リンクまたはdevice codeが失効・紛失した場合は再利用せず、手順1から新しく開始する。
 
 セットアップ完了時は、Larkドキュメントと共有用画像が両方返ること、選んだ起動範囲、登録した言い方に沿った依頼例を2つ示す。Bridgeが `user-default` で稼働し、MinutesとDocsのuser認証が確認できた場合だけ、次のLarkメッセージから利用できると案内する。

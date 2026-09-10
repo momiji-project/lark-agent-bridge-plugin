@@ -28,9 +28,10 @@ Use the plugin's native bootstrap and `scripts/bridge-manager.mjs`; do not recre
 5. Run `node <plugin-root>/scripts/bridge-manager.mjs preflight --json` after bootstrap. Treat the official Lark CLI and Bridge as separate checks. Stop if either remains missing, outdated, or resolves from an unexpected installation.
 6. If exactly one supported agent is installed, use it. If both `claude` and `codex` are installed and the user did not specify one, ask which one to connect.
 7. Confirm the workspace directory. Reject `/`, the home directory, system directories, and temporary roots.
-8. Ask whether this Bridge profile must access the signed-in user's personal Lark resources, such as Minutes and personal documents.
+8. Determine the purpose, not the authentication method. Use the personal-data branch without asking again when the user already requested Minutes or personal documents; use the bot-only branch when they requested chat replies only. Ask whether the Bridge will also be used for meeting minutes only when the purpose is unclear.
    - Use `bot-only` when chat replies and bot-owned resources are sufficient.
    - Use `user-default` only after explaining that it permits the agent to use the signed-in user's Lark identity and receiving explicit approval. Minutes generation requires this mode.
+   - Do not offer authentication-method choices. Personal access always uses the QR device flow below.
 9. Default to the `safe-edit` preset. Explain that `read-only` cannot edit files and `full` can access outside the workspace. Never select `full` without explicit confirmation.
 10. Create only the selected profile with the upstream CLI:
 
@@ -38,12 +39,13 @@ Use the plugin's native bootstrap and `scripts/bridge-manager.mjs`; do not recre
     lark-channel-bridge profile create <profile> --agent <claude|codex> --workspace <absolute-path>
     ```
 
-    Let the user scan the QR code. Never request that they paste an App Secret into chat. For an existing app, prefer the interactive secret prompt and do not pass `--app-secret` on a command line.
-11. Preview and apply the preset with `bridge-manager.mjs preset`. Preserve credentials, access lists, attachments, meetings, and unrelated profiles. For an approved personal-data profile, add both `--lark-cli-identity user-default` and `--confirm-user-default`; otherwise keep the default `bot-only`.
-12. Optionally install the managed Bridge-session instruction block with `bridge-manager.mjs rules`. Default to repository scope. Never overwrite hand-written `CLAUDE.md` or `AGENTS.md` content.
-13. Start only the newly configured profile. Do not start another profile merely because it exists.
-14. Run `bridge-manager.mjs doctor --profile <profile> --json` and `lark-channel-bridge status --profile <profile>`.
-15. Ask the user to send `/status` to the bot in Lark. Finish only after the local checks pass and the user confirms the bot replied.
+    Omitting `--app-id` selects the upstream QR-registration route. Do not ask the user to choose another registration method. Keep the exact registration URL visible as a fallback. Never request that they paste an App Secret into chat or pass `--app-secret` on the command line in the normal route.
+11. For personal access, run the profile-private split-flow before enabling `user-default`: verify `auth status --json --verify`; if required, start `auth login --domain minutes --domain docs --no-wait --json`, show the exact URL plus a generated PNG QR, ask the user to return after approval, and end the turn. In the next turn, the agent must run `auth login --device-code <device_code> --json` and verify Minutes/Docs scopes. Do not persist or reuse expired authorization data. A visible interactive terminal may wait after showing the QR.
+12. Preview and apply the preset with `bridge-manager.mjs preset`. Preserve credentials, access lists, attachments, meetings, and unrelated profiles. Apply `user-default` only after step 11 passes, with both `--lark-cli-identity user-default` and `--confirm-user-default`; otherwise keep `bot-only`.
+13. Optionally install the managed Bridge-session instruction block with `bridge-manager.mjs rules`. Default to repository scope. Never overwrite hand-written `CLAUDE.md` or `AGENTS.md` content.
+14. Start only the configured profile after its selected identity is ready. Do not start another profile merely because it exists.
+15. Run `bridge-manager.mjs doctor --profile <profile> --json` and `lark-channel-bridge status --profile <profile>`.
+16. Ask the user to send `/status` to the bot in Lark. Finish only after the local checks pass and the user confirms the bot replied.
 
 ## Boundaries
 
