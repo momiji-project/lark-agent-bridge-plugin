@@ -1,7 +1,7 @@
 {
   "name": "lark-agent-bridge",
-  "version": "0.2.6",
-  "description": "Mac/Windows共通の読取専用診断と、その結果に基づくLark公式CLI・Bridge導入を別コマンドで提供するLark接続基盤プラグイン",
+  "version": "0.2.7",
+  "description": "Plugin導入前の独立診断結果に基づきLark公式CLI・Bridgeの不足分を整え、導入後の読取専用再診断も提供するLark接続基盤プラグイン",
   "author": {
     "name": "Salon Flow Love"
   },

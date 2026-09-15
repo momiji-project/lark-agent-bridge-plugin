@@ -1,11 +1,13 @@
 ---
 name: lark-diagnose
-description: MacまたはWindowsのLark接続環境を、インストール・更新・設定変更・起動・再起動を一切せず診断する最初の独立入口。OS/CPU、Node.js/npm、Codex/Claude Code、Lark公式CLI、lark-channel-bridge、既存プロファイルと常駐状態を確認する。「まず診断だけ」「何が入っているか確認」「PCを変更せず確認」と依頼されたとき、また新規導入の最初に使う。
+description: Plugin導入後のMacまたはWindowsで、Lark接続環境をインストール・更新・設定変更・起動・再起動せず再診断する入口。OS/CPU、Node.js/npm、Codex/Claude Code、Lark公式CLI、lark-channel-bridge、既存プロファイルと常駐状態を確認する。「もう一度診断」「何が入っているか確認」「PCを変更せず確認」と依頼されたときに使う。Plugin導入前の初回診断には使わない。
 ---
 
 # Lark接続環境の診断だけを行う
 
-これは基盤導入ではない。新規導入で最初に実行する、独立した読取専用の診断である。
+これは基盤導入ではない。接続基盤Pluginを導入済みの環境で使う、独立した読取専用の再診断である。
+
+新規利用者の初回診断は、このSkillを使うためにPluginを先に追加してはならない。公開導入ガイドに掲載したPlugin非依存の `codex exec --sandbox read-only` コマンドで先に診断し、不足が見つかって導入を進める場合だけ本Pluginを追加する。
 
 ## 絶対条件
 
@@ -37,4 +39,3 @@ OSをユーザーに選ばせない。実行環境から自動判定する。診
 6. 既存プロファイル / 常駐状態
 
 最後に「PCの状態は変更していない」と明記する。不足がある場合は、次の選択肢として `$lark-setup` を案内するだけに留める。利用者が改めて基盤導入を依頼した場合だけ、別Skillの `$lark-setup` へ進む。
-

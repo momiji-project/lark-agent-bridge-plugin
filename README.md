@@ -4,7 +4,7 @@ Lark / Feishu からローカルのClaude CodeまたはCodexを利用するた�
 
 ## 正しい順序: 診断だけ → 基盤導入 → 議事録Plugin
 
-診断と導入は別コマンドです。最初の `$lark-diagnose` は状態を読むだけで、Node.jsの追加、パッケージ更新、設定変更、認証、Bridge起動を一切行いません。診断結果を確認した後、必要な場合だけ `$lark-setup` を明示実行します。
+診断と導入は別コマンドです。最初の診断はPluginを入れず、Codex標準の読取専用モードで実行します。Node.jsの追加、パッケージ更新、設定変更、認証、Bridge起動は一切行いません。診断結果を確認した後、必要な場合だけ接続基盤Pluginを追加し、`$lark-setup` を明示実行します。
 
 1. macOS / Windows / LinuxとCPUアーキテクチャを判定
 2. Codex / Claude Codeの導入とログイン状態を確認
@@ -15,28 +15,28 @@ Lark / Feishu からローカルのClaude CodeまたはCodexを利用するた�
 7. 議事録を使う場合だけ、QR付きデバイスフローでMinutes/Docsを認証
 8. 議事録が必要な利用者だけ、別Plugin `sfl-gijiroku` を追加
 
-最初にMarketplaceを登録し、Lark接続基盤Plugin本体を追加します。Plugin追加は診断コマンドを利用可能にするための準備であり、Lark CLIやBridgeの導入ではありません。
+### 1. Mac / Windows共通・Plugin導入前の診断専用コマンド
+
+Pluginを追加する前に、新しいTerminalまたはPowerShellで次の1行だけを実行します。MacとWindowsで同じです。
+
+```text
+codex exec --sandbox read-only --ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check "このPCのLark接続環境を読み取り専用で診断してください。OS名・CPUアーキテクチャ、Node.js、npm、Codex、Claude Code、Lark公式CLI（@larksuite/cli）、lark-channel-bridgeの有無・バージョン・稼働状態だけを確認してください。製品シリアル番号、UUID、UDID、token、App Secret、credential、設定本文、ログ本文は読んだり表示したりしないでください。導入、更新、修復、認証、設定変更、起動、停止、再起動は一切行わず、結果をOK・不足・要確認で報告して終了してください。"
+```
+
+このコマンドはPluginに依存せずOSを自動判定し、OS/CPU、Node.js/npm、Codex/Claude Code、Lark公式CLI、Bridge、既存プロファイル、常駐状態を読み取ります。インストール・更新・設定変更・起動・再起動・認証は行わず、診断結果を返した時点で止まります。
+
+Plugin内の `$lark-diagnose` とOS別の `terminal-diagnose.sh` / `terminal-diagnose.ps1` は、Plugin導入後の再診断用です。初回診断のためにPluginを先に入れません。
+
+### 2. 診断結果の後、必要な場合だけ基盤を導入
+
+診断結果を確認し、導入を進めると判断した場合だけMarketplaceを登録し、接続基盤Pluginを追加します。
 
 ```bash
 codex plugin marketplace add momiji-project/lark-agent-bridge-plugin --ref main
 codex plugin add lark-agent-bridge@momiji-lark-tools
 ```
 
-### 1. Mac / Windows共通の診断専用コマンド
-
-Plugin追加後、新しいTerminalまたはPowerShellで次の1行だけを実行します。MacとWindowsで同じです。
-
-```text
-codex '$lark-diagnose このPCのLark接続環境を変更せず診断してください。導入や修復は行わないでください。'
-```
-
-このコマンドはOSを自動判定し、OS/CPU、Node.js/npm、Codex/Claude Code、Lark公式CLI、Bridge、既存プロファイル、常駐状態を読み取ります。インストール・更新・設定変更・起動・再起動・認証は行わず、診断結果を返した時点で止まります。
-
-OS別の `terminal-diagnose.sh` / `terminal-diagnose.ps1` はPlugin内部の実装です。利用者がMac/Windowsを選ぶ必要はありません。
-
-### 2. 診断結果の後、必要な場合だけ基盤を導入
-
-診断結果を確認し、導入を進めると判断した場合だけ、別の次のコマンドを実行します。
+Plugin追加後に、次の基盤導入コマンドを実行します。
 
 ```text
 codex '$lark-setup 診断結果をもとに、Node.js・npm・Lark公式CLI・Bridgeの不足分だけを順番に設定してください。議事録も使います。'
@@ -46,10 +46,10 @@ codex '$lark-setup 診断結果をもとに、Node.js・npm・Lark公式CLI・Br
 
 ### エージェントへ依頼する場合
 
-Codexアプリ内から始める場合も、最初は診断専用入口だけを使います。
+Codexアプリ内から始める場合も、Pluginを追加する前に読取専用で診断します。Plugin追加後の `$lark-diagnose` は再診断専用です。
 
 ```text
-$lark-diagnose このPCのLark接続環境を変更せず診断してください。導入や修復は行わないでください
+このPCのLark接続環境を変更せず診断してください。導入・更新・修復・認証・設定変更・起動停止は行わず、結果を報告したら止まってください。
 ```
 
 診断結果を確認後、導入する場合だけ `$lark-setup` を別途依頼します。
@@ -89,21 +89,23 @@ Claude CodeまたはCodex CLIがインストール済みのmacOS、Linux、Windo
 
 ## Codexへインストール
 
+先に、前掲のPlugin非依存診断コマンドを実行します。診断結果を確認し、不足分の導入を進める場合だけ次を実行します。
+
 ```bash
 codex plugin marketplace add momiji-project/lark-agent-bridge-plugin --ref main
 codex plugin add lark-agent-bridge@momiji-lark-tools
 ```
 
-新しいセッションを開始し、最初は診断だけを依頼します。
-
-```text
-$lark-diagnose このPCのLark接続環境を変更せず診断してください。導入や修復は行わないでください
-```
-
-診断結果を確認し、導入する場合だけ次を別途依頼します。
+新しいセッションを開始し、診断結果をもとに導入する場合だけ次を依頼します。
 
 ```text
 $lark-setup 診断結果をもとに、Lark公式CLIとBridgeの不足分だけを設定してください
+```
+
+Plugin導入後に状態をもう一度確認するときだけ、再診断用Skillを使います。
+
+```text
+$lark-diagnose このPCのLark接続環境を変更せず再診断してください。導入や修復は行わないでください
 ```
 
 ## Claude Codeへインストール
@@ -115,16 +117,16 @@ Claude Codeで次を実行します。
 /plugin install lark-agent-bridge@momiji-lark-tools
 ```
 
-新しいセッションで最初は診断だけを依頼します。
-
-```text
-/lark-diagnose このPCのLark接続環境を変更せず診断してください。導入や修復は行わないでください
-```
-
-診断結果を確認し、導入する場合だけ次を別途依頼します。
+Plugin導入前の診断結果を確認し、新しいセッションで導入を進める場合だけ依頼します。
 
 ```text
 /lark-setup 診断結果をもとに、Lark公式CLIとBridgeの不足分だけを設定してください
+```
+
+Plugin導入後に状態をもう一度確認するときだけ、再診断用Skillを使います。
+
+```text
+/lark-diagnose このPCのLark接続環境を変更せず再診断してください。導入や修復は行わないでください
 ```
 
 Bridgeの接続確認後、議事録Pluginを別に追加します。
@@ -143,7 +145,7 @@ Bridgeの接続確認後、議事録Pluginを別に追加します。
 
 | Skill | 用途 |
 |---|---|
-| `lark-diagnose` | 新規導入の最初の入口。PCを変更しない独立診断だけを実行 |
+| `lark-diagnose` | Plugin導入後の再診断。PCを変更しない独立診断だけを実行 |
 | `lark-setup` | 診断結果の確認後に、公式CLI、Bridge、疎通確認を行う導入入口 |
 | `lark-bridge-setup` | 旧利用者向けの互換入口 |
 | `lark-bridge-doctor` | 設定を変更しない状態診断 |

@@ -82,6 +82,7 @@ const shellTerminalSource = await readFile(shellTerminalSetup, 'utf8')
 const windowsTerminalSource = await readFile(windowsTerminalSetup, 'utf8')
 const shellDiagnosticSource = await readFile(shellTerminalDiagnose, 'utf8')
 const windowsDiagnosticSource = await readFile(windowsTerminalDiagnose, 'utf8')
+const readmeSource = await readFile(join(repositoryRoot, 'README.md'), 'utf8')
 
 requireOrderedSnippets(shellDiagnosticSource, [
   'bash "$BOOTSTRAP" --check-only',
@@ -117,8 +118,11 @@ const diagnoseSkillSource = await readFile(join(pluginRoot, 'skills', 'lark-diag
 const diagnoseAgentSource = await readFile(join(pluginRoot, 'skills', 'lark-diagnose', 'agents', 'openai.yaml'), 'utf8')
 const setupAgentSource = await readFile(join(pluginRoot, 'skills', 'lark-setup', 'agents', 'openai.yaml'), 'utf8')
 requireValue(diagnoseSkillSource.includes('これは基盤導入ではない'), 'lark-diagnose must be independent from setup')
-requireValue(diagnoseAgentSource.includes('allow_implicit_invocation: true'), 'lark-diagnose must be the automatic first route')
+requireValue(diagnoseSkillSource.includes('Plugin導入前の初回診断には使わない'), 'lark-diagnose must not be presented as the pre-install entry')
+requireValue(diagnoseAgentSource.includes('allow_implicit_invocation: true'), 'lark-diagnose must remain discoverable for post-install rechecks')
 requireValue(setupAgentSource.includes('allow_implicit_invocation: false'), 'lark-setup must require explicit invocation after diagnosis')
+requireValue(readmeSource.includes('codex exec --sandbox read-only --ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check'), 'README must expose the plugin-independent pre-install diagnosis command')
+requireValue(readmeSource.indexOf('Plugin導入前の診断専用コマンド') < readmeSource.indexOf('codex plugin add lark-agent-bridge@momiji-lark-tools'), 'README must diagnose before adding the bridge plugin')
 requireOrderedSnippets(shellTerminalSource, [
   'bash "$BOOTSTRAP" --check-only',
   '"$NODE_COMMAND" "$MANAGER" preflight --json',

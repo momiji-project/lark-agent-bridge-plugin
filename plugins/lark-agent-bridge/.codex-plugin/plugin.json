@@ -1,7 +1,7 @@
 {
   "name": "lark-agent-bridge",
-  "version": "0.2.6",
-  "description": "Mac/Windows共通の読取専用診断と、その結果に基づくLark公式CLI・Bridge導入を別コマンドで提供するLark接続基盤Plugin。",
+  "version": "0.2.7",
+  "description": "Plugin導入前の独立診断結果に基づき、Lark公式CLI・Bridgeの不足分を整えるLark接続基盤Plugin。導入後の読取専用再診断も提供します。",
   "author": {
     "name": "Salon Flow Love"
   },
@@ -10,16 +10,16 @@
   "keywords": ["lark", "feishu", "bridge", "claude-code", "codex"],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Lark接続診断・基盤セットアップ",
-    "shortDescription": "変更しない診断と、診断後の基盤導入を分離",
-    "longDescription": "最初にMac/Windows共通の読取専用診断だけを実行し、PCを変更せずOS、Node.js/npm、AIエージェント、Lark公式CLI、Bridge、既存プロファイルを確認します。診断結果の確認後、別コマンドで必要な場合だけNode.js/npm、Lark公式CLI、Lark公式Channel SDKを使うlark-channel-bridgeの順に不足分を整えます。秘密情報はPluginやGitへ保存しません。",
+    "displayName": "Lark接続基盤セットアップ",
+    "shortDescription": "事前診断後に公式CLIとBridgeの不足分だけを導入",
+    "longDescription": "Pluginを追加する前に行ったMac/Windows共通の読取専用診断結果をもとに、必要な場合だけNode.js/npm、Lark公式CLI、Lark公式Channel SDKを使うlark-channel-bridgeの順に不足分を整えます。Plugin導入後の再診断も読取専用で実行できます。秘密情報はPluginやGitへ保存しません。",
     "developerName": "Salon Flow Love",
     "category": "Productivity",
     "capabilities": ["Local setup", "Diagnostics", "Agent configuration"],
     "websiteURL": "https://sfl-lark-ai-bridge-guide.pages.dev/",
     "defaultPrompt": [
-      "$lark-diagnose を使い、このPCのLark接続環境を変更せず診断してください。導入や修復は行わないでください。",
       "$lark-setup を使い、完了済みの診断結果をもとにLark公式CLIとBridgeを不足分だけ設定してください。議事録も使います。",
+      "$lark-diagnose を使い、このPCのLark接続環境を変更せず再診断してください。導入や修復は行わないでください。",
       "Lark Bridgeの状態を診断してください",
       "Bridgeで使うエージェント設定を整えてください"
     ]

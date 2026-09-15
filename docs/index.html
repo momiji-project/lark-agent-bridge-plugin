@@ -14,17 +14,15 @@
       content="LarkからClaude Code / Codexへ。QR登録から安全な運用まで、迷わず導入できる日本語ガイド。"
     />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://momiji-project.github.io/lark-agent-bridge-plugin/" />
-    <meta property="og:image" content="https://momiji-project.github.io/lark-agent-bridge-plugin/sfl-logo.png" />
+    <meta property="og:url" content="https://sfl-lark-ai-bridge-guide.pages.dev/" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Lark Agent Bridge — 導入ガイド" />
     <meta
       name="twitter:description"
       content="LarkからClaude Code / Codexへ。QR登録から安全な運用まで、迷わず導入できる日本語ガイド。"
     />
-    <meta name="twitter:image" content="https://momiji-project.github.io/lark-agent-bridge-plugin/sfl-logo.png" />
     <title>Lark Agent Bridge — 導入ガイド</title>
-    <link rel="canonical" href="https://momiji-project.github.io/lark-agent-bridge-plugin/" />
+    <link rel="canonical" href="https://sfl-lark-ai-bridge-guide.pages.dev/" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./styles.css" />
     <script src="./app.js" defer></script>
@@ -35,7 +33,7 @@
         "headline": "Lark Agent Bridge 導入ガイド",
         "description": "Lark Agent Bridge Pluginの導入方法、Lark Developer設定、Claude Code/Codexとの接続、安全設計を解説します。",
         "inLanguage": "ja",
-        "url": "https://momiji-project.github.io/lark-agent-bridge-plugin/",
+        "url": "https://sfl-lark-ai-bridge-guide.pages.dev/",
         "author": { "@type": "Organization", "name": "SFL / MOMIJI Project" },
         "about": ["Lark", "Claude Code", "Codex", "AI Agent Bridge"]
       }
@@ -56,7 +54,6 @@
         <a href="#developer">Lark Developer</a>
         <a href="#install">導入</a>
         <a href="#security">安全設計</a>
-        <a class="nav-github" href="https://github.com/momiji-project/lark-agent-bridge-plugin">GitHub</a>
       </nav>
     </header>
 
@@ -70,7 +67,7 @@
           <div class="hero-summary">
             <p>
               Claude CodeとCodexを、Larkのチャットから安全に操作するための導入プラグインです。
-              最初は診断専用SkillがPCを変更せず状態を確認します。結果確認後、別のセットアップSkillでLark公式CLIとBridgeをQR登録できます。
+              Pluginを入れる前にCodex標準の読取専用診断で状態を確認します。結果確認後、必要な場合だけPluginを追加し、セットアップSkillでLark公式CLIとBridgeをQR登録できます。
             </p>
             <div class="hero-actions">
               <a class="button button-primary" href="#install">5分で導入する</a>
@@ -82,15 +79,15 @@
         <div class="quick-path" aria-label="導入の3ステップ">
           <article>
             <span class="quick-number">01</span>
-            <div><small>INSTALL</small><strong>プラグインを追加</strong><p>Codex / Claude CodeにGitHubから導入。</p></div>
+            <div><small>DIAGNOSE</small><strong>Pluginなしで診断</strong><p>Mac / Windows共通の読取専用コマンド。</p></div>
           </article>
           <article>
             <span class="quick-number">02</span>
-            <div><small>AUTHORIZE</small><strong>QRをLarkで承認</strong><p>PersonalAgentを公式フローで登録。</p></div>
+            <div><small>INSTALL</small><strong>不足時だけPlugin追加</strong><p>診断結果を確認してから導入。</p></div>
           </article>
           <article>
             <span class="quick-number">03</span>
-            <div><small>CONNECT</small><strong><code>/status</code> で確認</strong><p>ローカルBridgeとの長接続を確認。</p></div>
+            <div><small>CONNECT</small><strong>QR認証と疎通確認</strong><p>Lark公式CLI、Bridgeの順に整える。</p></div>
           </article>
           <aside>
             <span class="safe-dot"></span>
@@ -229,8 +226,8 @@
       <section class="section install-section" id="install" aria-labelledby="install-title">
         <div class="section-heading">
           <p class="kicker">INSTALL</p>
-          <h2 id="install-title">エージェントを選んで導入</h2>
-          <p>プラグインを追加したら、初期設定Skillに任せられます。</p>
+          <h2 id="install-title">診断してから、必要な場合だけ導入</h2>
+          <p>Pluginを追加する前に、Mac / Windows共通の診断専用コマンドを実行します。</p>
         </div>
 
         <div class="install-card">
@@ -239,13 +236,14 @@
             <button id="install-tab-claude" class="install-tab" role="tab" aria-selected="false" aria-controls="install-panel-claude" data-install="claude">Claude Code</button>
           </div>
           <div id="install-panel-codex" class="install-panel active" role="tabpanel" aria-labelledby="install-tab-codex">
+            <p class="run-prompt"><span>1. Plugin導入前の診断専用コマンド</span><code>codex exec --sandbox read-only --ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check "このPCのLark接続環境を読み取り専用で診断してください。OS名・CPUアーキテクチャ、Node.js、npm、Codex、Claude Code、Lark公式CLI（@larksuite/cli）、lark-channel-bridgeの有無・バージョン・稼働状態だけを確認してください。製品シリアル番号、UUID、UDID、token、App Secret、credential、設定本文、ログ本文は読んだり表示したりしないでください。導入、更新、修復、認証、設定変更、起動、停止、再起動は一切行わず、結果をOK・不足・要確認で報告して終了してください。"</code></p>
             <div class="code-block">
               <button class="copy-button" type="button" data-copy="codex-code">コピー</button>
               <pre id="codex-code"><code>codex plugin marketplace add momiji-project/lark-agent-bridge-plugin --ref main
 codex plugin add lark-agent-bridge@momiji-lark-tools</code></pre>
             </div>
-            <p class="run-prompt"><span>最初の診断専用コマンド</span><code>codex '$lark-diagnose このPCのLark接続環境を変更せず診断してください。導入や修復は行わないでください。'</code></p>
-            <p class="run-prompt"><span>診断後、必要な場合だけ</span><code>codex '$lark-setup 診断結果をもとに、Lark公式CLIとBridgeの不足分だけを設定してください。'</code></p>
+            <p class="run-prompt"><span>2. 診断後、不足がある場合だけ</span><code>codex '$lark-setup 診断結果をもとに、Lark公式CLIとBridgeの不足分だけを設定してください。'</code></p>
+            <p class="run-prompt"><span>3. Plugin導入後の再診断だけ</span><code>codex '$lark-diagnose このPCのLark接続環境を変更せず再診断してください。導入や修復は行わないでください。'</code></p>
           </div>
           <div id="install-panel-claude" class="install-panel" role="tabpanel" aria-labelledby="install-tab-claude" hidden>
             <div class="code-block">
@@ -253,13 +251,13 @@ codex plugin add lark-agent-bridge@momiji-lark-tools</code></pre>
               <pre id="claude-code"><code>/plugin marketplace add momiji-project/lark-agent-bridge-plugin
 /plugin install lark-agent-bridge@momiji-lark-tools</code></pre>
             </div>
-            <p class="run-prompt"><span>最初は診断だけ</span><code>/lark-diagnose このPCのLark接続環境を変更せず診断してください。導入や修復は行わないでください</code></p>
             <p class="run-prompt"><span>診断後、必要な場合だけ</span><code>/lark-setup 診断結果をもとに、Lark公式CLIとBridgeの不足分だけを設定してください</code></p>
+            <p class="run-prompt"><span>Plugin導入後の再診断だけ</span><code>/lark-diagnose このPCのLark接続環境を変更せず再診断してください。導入や修復は行わないでください</code></p>
           </div>
         </div>
 
         <div class="skills-grid">
-          <article><span>FIRST</span><h3>最初の診断専用入口</h3><code>lark-diagnose</code><p>環境を読むだけ。導入・修復・起動・認証は行いません。</p></article>
+          <article><span>RECHECK</span><h3>Plugin導入後の再診断</h3><code>lark-diagnose</code><p>環境を読むだけ。導入・修復・起動・認証は行いません。</p></article>
           <article><span>SETUP</span><h3>診断後の導入入口</h3><code>lark-setup</code><p>診断結果の後、公式CLI、QR登録、Bridge、疎通確認まで。</p></article>
           <article><span>DOCTOR</span><h3>導入後の状態診断</h3><code>lark-bridge-doctor</code><p>既存Bridgeの接続と構成を点検。</p></article>
           <article><span>CONFIG</span><h3>エージェント設定</h3><code>lark-bridge-agent-config</code><p>権限、workspace、継続ルールを管理。</p></article>
