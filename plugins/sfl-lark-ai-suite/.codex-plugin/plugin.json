@@ -1,6 +1,6 @@
 {
   "name": "sfl-lark-ai-suite",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "既存利用者向け統合Plugin。Plugin導入前の診断結果に基づく基盤・議事録導入と、導入後の読取専用再診断を提供します。",
   "author": {
     "name": "Salon Flow Love"

@@ -20,7 +20,7 @@ Lark / Feishu からローカルのClaude CodeまたはCodexを利用するた�
 Pluginを追加する前に、新しいTerminalまたはPowerShellで次の1行だけを実行します。MacとWindowsで同じです。
 
 ```text
-codex exec --sandbox read-only --ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check "このPCのLark接続環境を読み取り専用で診断してください。OS名・CPUアーキテクチャ、Node.js、npm、Codex、Claude Code、Lark公式CLI（@larksuite/cli）、lark-channel-bridgeの有無・バージョン・稼働状態だけを確認してください。製品シリアル番号、UUID、UDID、token、App Secret、credential、設定本文、ログ本文は読んだり表示したりしないでください。導入、更新、修復、認証、設定変更、起動、停止、再起動は一切行わず、結果をOK・不足・要確認で報告して終了してください。"
+codex exec --sandbox read-only --ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check "このPCのLark接続環境を読み取り専用で診断してください。OS名・CPUアーキテクチャ、Node.js、npm、Codex、Claude Code、Lark公式CLI（@larksuite/cli）、lark-channel-bridgeの有無・バージョン・プロファイル名一覧・各プロファイルの稼働状態だけを確認してください。製品シリアル番号、UUID、UDID、token、App Secret、credential、設定本文、ログ本文は読んだり表示したりしないでください。導入、更新、修復、認証、設定変更、起動、停止、再起動は一切行わず、結果をOK・不足・要確認で報告して終了してください。"
 ```
 
 このコマンドはPluginに依存せずOSを自動判定し、OS/CPU、Node.js/npm、Codex/Claude Code、Lark公式CLI、Bridge、既存プロファイル、常駐状態を読み取ります。インストール・更新・設定変更・起動・再起動・認証は行わず、診断結果を返した時点で止まります。

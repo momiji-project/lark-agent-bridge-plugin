@@ -1,11 +1,11 @@
 ---
 name: lark-bridge-setup
-description: Legacy compatibility entry for existing users who explicitly invoke lark-bridge-setup. New users must run the read-only lark-diagnose command first, then use lark-setup only after reviewing the result.
+description: Legacy compatibility entry for existing users who explicitly invoke lark-bridge-setup. New users must complete the standalone read-only diagnosis before installing this Plugin, then use lark-setup only after reviewing the result.
 ---
 
 # Set up Lark Agent Bridge
 
-This is a compatibility entry. For a new installation, run `lark-diagnose` first and stop after reporting the read-only result. Use `lark-setup` only when the user then explicitly requests installation.
+This is a compatibility entry. New users must not install the Plugin in order to diagnose. Before Plugin installation, run the standalone `codex exec --sandbox read-only --ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check` diagnosis shown in the SFL installation guide and stop after reporting the result. Use `lark-setup` only when the user then explicitly requests installation. The Plugin's `lark-diagnose` is for post-installation rechecks only.
 
 Use the plugin's native bootstrap and `scripts/bridge-manager.mjs`; do not recreate Bridge behavior or hand-edit credential files.
 

@@ -61,7 +61,7 @@
       <section class="hero" id="top">
         <div class="hero-title-row">
           <div class="hero-copy">
-            <p class="eyebrow"><span></span> SFL OPEN SOURCE · v0.1.0</p>
+            <p class="eyebrow"><span></span> SFL · v0.2.8</p>
             <h1>Larkを、<em>AIエージェントの入口</em>に。</h1>
           </div>
           <div class="hero-summary">
@@ -236,23 +236,23 @@
             <button id="install-tab-claude" class="install-tab" role="tab" aria-selected="false" aria-controls="install-panel-claude" data-install="claude">Claude Code</button>
           </div>
           <div id="install-panel-codex" class="install-panel active" role="tabpanel" aria-labelledby="install-tab-codex">
-            <p class="run-prompt"><span>1. Plugin導入前の診断専用コマンド</span><code>codex exec --sandbox read-only --ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check "このPCのLark接続環境を読み取り専用で診断してください。OS名・CPUアーキテクチャ、Node.js、npm、Codex、Claude Code、Lark公式CLI（@larksuite/cli）、lark-channel-bridgeの有無・バージョン・稼働状態だけを確認してください。製品シリアル番号、UUID、UDID、token、App Secret、credential、設定本文、ログ本文は読んだり表示したりしないでください。導入、更新、修復、認証、設定変更、起動、停止、再起動は一切行わず、結果をOK・不足・要確認で報告して終了してください。"</code></p>
+            <p class="run-prompt"><span>1. Plugin導入前の診断専用コマンド</span><code>codex exec --sandbox read-only --ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check "このPCのLark接続環境を読み取り専用で診断してください。OS名・CPUアーキテクチャ、Node.js、npm、Codex、Claude Code、Lark公式CLI（@larksuite/cli）、lark-channel-bridgeの有無・バージョン・プロファイル名一覧・各プロファイルの稼働状態だけを確認してください。製品シリアル番号、UUID、UDID、token、App Secret、credential、設定本文、ログ本文は読んだり表示したりしないでください。導入、更新、修復、認証、設定変更、起動、停止、再起動は一切行わず、結果をOK・不足・要確認で報告して終了してください。"</code></p>
             <div class="code-block">
               <button class="copy-button" type="button" data-copy="codex-code">コピー</button>
-              <pre id="codex-code"><code>codex plugin marketplace add momiji-project/lark-agent-bridge-plugin --ref main
-codex plugin add lark-agent-bridge@momiji-lark-tools</code></pre>
+              <pre id="codex-code"><code>codex plugin add lark-agent-bridge@momiji-lark-tools</code></pre>
             </div>
             <p class="run-prompt"><span>2. 診断後、不足がある場合だけ</span><code>codex '$lark-setup 診断結果をもとに、Lark公式CLIとBridgeの不足分だけを設定してください。'</code></p>
             <p class="run-prompt"><span>3. Plugin導入後の再診断だけ</span><code>codex '$lark-diagnose このPCのLark接続環境を変更せず再診断してください。導入や修復は行わないでください。'</code></p>
           </div>
           <div id="install-panel-claude" class="install-panel" role="tabpanel" aria-labelledby="install-tab-claude" hidden>
+            <p class="run-prompt"><span>1. Plugin導入前の診断専用コマンド</span><code>codex exec --sandbox read-only --ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check "このPCのLark接続環境を読み取り専用で診断してください。OS名・CPUアーキテクチャ、Node.js、npm、Codex、Claude Code、Lark公式CLI（@larksuite/cli）、lark-channel-bridgeの有無・バージョン・プロファイル名一覧・各プロファイルの稼働状態だけを確認してください。製品シリアル番号、UUID、UDID、token、App Secret、credential、設定本文、ログ本文は読んだり表示したりしないでください。導入、更新、修復、認証、設定変更、起動、停止、再起動は一切行わず、結果をOK・不足・要確認で報告して終了してください。"</code></p>
             <div class="code-block">
               <button class="copy-button" type="button" data-copy="claude-code">コピー</button>
-              <pre id="claude-code"><code>/plugin marketplace add momiji-project/lark-agent-bridge-plugin
-/plugin install lark-agent-bridge@momiji-lark-tools</code></pre>
+              <pre id="claude-code"><code>/plugin install lark-agent-bridge@momiji-lark-tools</code></pre>
             </div>
-            <p class="run-prompt"><span>診断後、必要な場合だけ</span><code>/lark-setup 診断結果をもとに、Lark公式CLIとBridgeの不足分だけを設定してください</code></p>
-            <p class="run-prompt"><span>Plugin導入後の再診断だけ</span><code>/lark-diagnose このPCのLark接続環境を変更せず再診断してください。導入や修復は行わないでください</code></p>
+            <p class="run-prompt"><span>2. 診断後、不足がある場合だけPluginを追加</span><code>Marketplace未登録の場合は管理者へ依頼してください。</code></p>
+            <p class="run-prompt"><span>3. 診断後、必要な場合だけ</span><code>/lark-setup 診断結果をもとに、Lark公式CLIとBridgeの不足分だけを設定してください</code></p>
+            <p class="run-prompt"><span>4. Plugin導入後の再診断だけ</span><code>/lark-diagnose このPCのLark接続環境を変更せず再診断してください。導入や修復は行わないでください</code></p>
           </div>
         </div>
 
@@ -337,7 +337,7 @@ codex plugin add lark-agent-bridge@momiji-lark-tools</code></pre>
           <h2>Larkを、エージェントの入口に。</h2>
           <p>導入、診断、権限設定、更新まで。チームで再利用できる形にまとめました。</p>
         </div>
-        <a class="button button-light" href="https://github.com/momiji-project/lark-agent-bridge-plugin">GitHubで始める</a>
+        <a class="button button-light" href="#install">診断コマンドを見る</a>
       </section>
     </main>
 
@@ -347,9 +347,9 @@ codex plugin add lark-agent-bridge@momiji-lark-tools</code></pre>
         <p>Community plugin for safer local agent operations.</p>
       </div>
       <div class="footer-links">
-        <a href="https://github.com/momiji-project/lark-agent-bridge-plugin">Plugin repository</a>
-        <a href="https://github.com/zarazhangrui/lark-coding-agent-bridge">Bridge upstream</a>
-        <a href="https://github.com/larksuite/node-sdk">Lark official Node SDK</a>
+        <a href="#install">導入手順</a>
+        <a href="#security">安全設計</a>
+        <a href="https://sfl-lark-ai-bridge-guide.pages.dev/">SFL導入ガイド</a>
       </div>
       <p class="copyright">MIT License · MOMIJI Project</p>
     </footer>

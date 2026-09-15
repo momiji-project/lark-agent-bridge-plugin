@@ -1,6 +1,6 @@
 {
   "name": "lark-agent-bridge",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Plugin導入前の独立診断結果に基づき、Lark公式CLI・Bridgeの不足分を整えるLark接続基盤Plugin。導入後の読取専用再診断も提供します。",
   "author": {
     "name": "Salon Flow Love"

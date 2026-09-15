@@ -83,6 +83,7 @@ const windowsTerminalSource = await readFile(windowsTerminalSetup, 'utf8')
 const shellDiagnosticSource = await readFile(shellTerminalDiagnose, 'utf8')
 const windowsDiagnosticSource = await readFile(windowsTerminalDiagnose, 'utf8')
 const readmeSource = await readFile(join(repositoryRoot, 'README.md'), 'utf8')
+const docsSource = await readFile(join(repositoryRoot, 'docs', 'index.html'), 'utf8')
 
 requireOrderedSnippets(shellDiagnosticSource, [
   'bash "$BOOTSTRAP" --check-only',
@@ -117,12 +118,19 @@ for (const [label, source] of [
 const diagnoseSkillSource = await readFile(join(pluginRoot, 'skills', 'lark-diagnose', 'SKILL.md'), 'utf8')
 const diagnoseAgentSource = await readFile(join(pluginRoot, 'skills', 'lark-diagnose', 'agents', 'openai.yaml'), 'utf8')
 const setupAgentSource = await readFile(join(pluginRoot, 'skills', 'lark-setup', 'agents', 'openai.yaml'), 'utf8')
+const legacySetupSource = await readFile(join(pluginRoot, 'skills', 'lark-bridge-setup', 'SKILL.md'), 'utf8')
 requireValue(diagnoseSkillSource.includes('これは基盤導入ではない'), 'lark-diagnose must be independent from setup')
 requireValue(diagnoseSkillSource.includes('Plugin導入前の初回診断には使わない'), 'lark-diagnose must not be presented as the pre-install entry')
 requireValue(diagnoseAgentSource.includes('allow_implicit_invocation: true'), 'lark-diagnose must remain discoverable for post-install rechecks')
 requireValue(setupAgentSource.includes('allow_implicit_invocation: false'), 'lark-setup must require explicit invocation after diagnosis')
 requireValue(readmeSource.includes('codex exec --sandbox read-only --ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check'), 'README must expose the plugin-independent pre-install diagnosis command')
 requireValue(readmeSource.indexOf('Plugin導入前の診断専用コマンド') < readmeSource.indexOf('codex plugin add lark-agent-bridge@momiji-lark-tools'), 'README must diagnose before adding the bridge plugin')
+requireValue(!legacySetupSource.includes('New users must run the read-only lark-diagnose command first'), 'legacy setup must not require a Plugin skill for pre-install diagnosis')
+requireValue(docsSource.includes(`SFL · v${codexManifest?.version}`), 'public docs version must match the plugin manifest')
+requireValue(!docsSource.includes('https://github.com'), 'public docs must not link visitors directly to GitHub')
+const claudePanel = docsSource.slice(docsSource.indexOf('id="install-panel-claude"'), docsSource.indexOf('</div>\n        </div>\n\n        <div class="skills-grid">'))
+requireValue(claudePanel.includes('Plugin導入前の診断専用コマンド'), 'Claude installation panel must begin with the plugin-independent diagnosis')
+requireValue(claudePanel.indexOf('Plugin導入前の診断専用コマンド') < claudePanel.indexOf('/plugin install lark-agent-bridge@momiji-lark-tools'), 'Claude installation panel must diagnose before adding the plugin')
 requireOrderedSnippets(shellTerminalSource, [
   'bash "$BOOTSTRAP" --check-only',
   '"$NODE_COMMAND" "$MANAGER" preflight --json',
