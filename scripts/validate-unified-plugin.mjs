@@ -54,6 +54,7 @@ for (const [label, marketplace] of [["Codex", codexMarketplace], ["Claude", clau
 
 const expectedSkills = [
   "sfl-lark-setup",
+  "lark-setup",
   "lark-bridge-setup",
   "lark-bridge-doctor",
   "lark-bridge-agent-config",

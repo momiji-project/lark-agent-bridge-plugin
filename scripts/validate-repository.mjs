@@ -74,6 +74,18 @@ function requireOrderedSnippets(source, snippets, label) {
 
 const shellTerminalSource = await readFile(shellTerminalSetup, 'utf8')
 const windowsTerminalSource = await readFile(windowsTerminalSetup, 'utf8')
+requireOrderedSnippets(shellTerminalSource, [
+  'bash "$BOOTSTRAP" --check-only',
+  '"$NODE_COMMAND" "$MANAGER" preflight --json',
+  '診断ではCodexとClaude Codeの両方を確認しました。',
+  'bash "$BOOTSTRAP"',
+], 'macOS/Linux diagnostic-first order')
+requireOrderedSnippets(windowsTerminalSource, [
+  'Invoke-Bootstrap -Arguments @("-CheckOnly")',
+  '& $nodeForPreflight $Manager preflight --json',
+  '診断ではCodexとClaude Codeの両方を確認しました。',
+  'Invoke-Bootstrap -Arguments @()',
+], 'Windows diagnostic-first order')
 for (const [label, source, executionStart, markers] of [
   ['macOS/Linux terminal setup', shellTerminalSource, 'if [ "$PROFILE_EXISTS" -eq 0 ]', ['ensure_personal_lark_auth', 'preset --profile', 'start --profile']],
   ['Windows terminal setup', windowsTerminalSource, 'if (-not $profileExists)', ['Enable-PersonalLarkAccess', '$Manager, "preset"', '& $bridge start']],

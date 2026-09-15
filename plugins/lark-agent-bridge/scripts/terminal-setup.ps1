@@ -225,23 +225,6 @@ Invoke-Bootstrap -Arguments @("-CheckOnly")
 $runtimeStatus = $script:BootstrapExitCode
 if ($RuntimeCheckOnly) { exit $runtimeStatus }
 
-if (-not $Agent) {
-  $codex = Resolve-Application -Names @("codex.exe", "codex.cmd", "codex")
-  $claude = Resolve-Application -Names @("claude.exe", "claude.cmd", "claude")
-  if ($codex -and -not $claude) {
-    $Agent = "codex"
-  } elseif ($claude -and -not $codex) {
-    $Agent = "claude"
-  } elseif ($codex -and $claude) {
-    $choice = Read-Host "接続するエージェントを選んでください。1=Codex、2=Claude Code [1]"
-    $Agent = if ($choice -eq "2") { "claude" } else { "codex" }
-  } else {
-    throw "CodexまたはClaude Codeが見つかりません。先に利用するエージェントを導入してください。"
-  }
-}
-$agentCommand = Resolve-Application -Names @("$Agent.exe", "$Agent.cmd", $Agent)
-if (-not $agentCommand) { throw "$Agent is not installed or not available on PATH." }
-
 if ($runtimeStatus -ne 0 -and -not $InstallNodeLts) {
   Write-Host ""
   Write-Host "Node.jsとnpmが必要です。Node.js LTSをこのPCへ導入します。"
@@ -266,8 +249,35 @@ if ($runtimeStatus -ne 0) {
 
 Refresh-ProcessPath
 if (${env:ProgramFiles}) { $env:Path = "$(Join-Path ${env:ProgramFiles} 'nodejs');$env:Path" }
+
+$nodeForPreflight = Resolve-Application -Names @("node.exe", "node")
+if (-not $nodeForPreflight) {
+  throw "Node.jsの導入後もnodeコマンドを確認できません。新しいPowerShellで同じセットアップを再実行してください。"
+}
+Write-Host ""
+Write-Host "Lark接続基盤の自動診断を行います（この段階では設定を変更しません）。"
+& $nodeForPreflight $Manager preflight --json
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "診断で不足または不整合が見つかりました。合格済みの項目は再利用し、不足分だけを次の工程で整えます。"
+}
+
+if (-not $Agent) {
+  $codex = Resolve-Application -Names @("codex.exe", "codex.cmd", "codex")
+  $claude = Resolve-Application -Names @("claude.exe", "claude.cmd", "claude")
+  if ($codex -and -not $claude) {
+    $Agent = "codex"
+  } elseif ($claude -and -not $codex) {
+    $Agent = "claude"
+  } elseif ($codex -and $claude) {
+    $choice = Read-Host "診断ではCodexとClaude Codeの両方を確認しました。Bridgeへ接続する方を選んでください。1=Codex、2=Claude Code [1]"
+    $Agent = if ($choice -eq "2") { "claude" } else { "codex" }
+  } else {
+    throw "CodexまたはClaude Codeが見つかりません。先に利用するエージェントを導入してください。"
+  }
+}
 $agentCommand = Resolve-Application -Names @("$Agent.exe", "$Agent.cmd", $Agent)
-if (-not $agentCommand) { throw "$Agent is not installed or not available after the runtime check." }
+if (-not $agentCommand) { throw "$Agent is not installed or not available after the diagnostic." }
+
 Confirm-AgentLogin -AgentName $Agent -AgentCommand $agentCommand
 
 if ($DryRun) {

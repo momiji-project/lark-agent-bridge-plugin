@@ -1,8 +1,8 @@
 # SFL Lark Plugins
 
-Lark / Feishu からローカルのClaude CodeまたはCodexを利用するためのBridge用Pluginと、Lark Minutesから議事録を作るPluginを別々に配布します。Bridge本体・認証と、議事録の要約・デザイン設定を混在させません。
+Lark / Feishu からローカルのClaude CodeまたはCodexを利用するための接続基盤Pluginと、Lark Minutesから議事録を作るPluginを別々に配布します。接続基盤にはNode.js/npmの診断、Lark公式CLI、Bridge、QR認証、疎通確認までを含め、議事録の要約・デザイン設定とは分離します。
 
-## 推奨: 土台と追加機能を分けて導入
+## 推奨: 一つの入口から診断し、土台と追加機能を順番に導入
 
 導入は次のゲートを順番に通します。Node.jsやnpmが無い場合もセットアップの途中で止めたままにせず、変更内容を説明して承認を得た後、OS別のブートストラップでNode.jsから整備します。前のゲートが完了するまでBridgeや議事録Pluginを後追い導入しません。
 
@@ -15,44 +15,34 @@ Lark / Feishu からローカルのClaude CodeまたはCodexを利用するた�
 7. 議事録を使う場合だけ、QR付きデバイスフローでMinutes/Docsを認証
 8. 議事録が必要な利用者だけ、別Plugin `sfl-gijiroku` を追加
 
-最初にMarketplaceを登録し、Bridge専用Pluginを導入します。
+最初にMarketplaceを登録し、Lark接続基盤Pluginを導入します。Plugin追加後の標準入口は `$lark-setup` だけです。
 
 ```bash
 codex plugin marketplace add momiji-project/lark-agent-bridge-plugin --ref main
 codex plugin add lark-agent-bridge@momiji-lark-tools
 ```
 
-### ターミナルから直接設定
+### Mac / Windows共通の開始コマンド
 
-`$lark-bridge-setup`はエージェントへの依頼であり、ターミナルコマンドではありません。ターミナル操作だけで進める場合は、Plugin追加後にOS別の対話式セットアップを実行します。
+Plugin追加後、新しいTerminalまたはPowerShellで次の1行を実行します。MacとWindowsで同じです。`codex`を対話モードで開くため、Node.js追加やQR認証など、途中で必要な確認にもそのまま回答できます。
 
-macOS:
-
-```bash
-setup_script="$(find "$HOME/.codex/plugins/cache/momiji-lark-tools/lark-agent-bridge" -type f -name terminal-setup.sh -exec ls -t {} + | head -n 1)"
-[ -n "$setup_script" ] || { echo "lark-agent-bridge Pluginが見つかりません。先にPluginを追加してください。"; exit 1; }
-bash "$setup_script"
+```text
+codex '$lark-setup このPCを最初に自動診断し、Node.js・npm・Lark公式CLI・Bridgeを不足分だけ順番に設定してください。接続確認後、議事録Pluginも導入してください。'
 ```
 
-Windows PowerShell:
+この一つの入口がOSを判定し、最初に設定を変更しない診断を実行します。合格済みの項目は飛ばし、Node.js/npm、Lark公式CLI、Bridge、プロファイル、QR認証、権限、起動、疎通確認を不足分だけ順番に処理します。Lark公式CLIを必ずBridgeより先に整えます。Node.jsの追加、既存プロファイルの再利用、個人Larkデータへのアクセスは、ターミナル上で確認してから実行します。
 
-```powershell
-$setup = Get-ChildItem "$env:USERPROFILE\.codex\plugins\cache\momiji-lark-tools\lark-agent-bridge" -Filter terminal-setup.ps1 -Recurse | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-if (-not $setup) { throw "lark-agent-bridge Pluginが見つかりません。先にPluginを追加してください。" }
-powershell -NoProfile -ExecutionPolicy Bypass -File $setup.FullName
-```
-
-このウィザードがNode.js/npm、Lark公式CLI、Bridge、プロファイル、権限、起動、診断までを順番に処理します。Node.jsの追加、既存プロファイルの再利用、個人Larkデータへのアクセスは、ターミナル上で確認してから実行します。認証方式は選択させず、Bridge登録はQR、Minutes/DocsはQR付きデバイスフローに固定します。ユーザー認証とscope検証が通ってから `user-default` を適用し、新規または停止中のプロファイルを起動します。明示的に再利用した稼働中プロファイルは、その一つだけを再起動します。QRを読み取れない場合は、表示した同一URLを予備経路として使用できます。
+OS別の `terminal-setup.sh` / `terminal-setup.ps1` はPlugin内部の実装です。通常利用者が選ぶコマンドではなく、`$lark-setup` が自動で適切な方へ分岐します。
 
 ### エージェントへ依頼する場合
 
-新しいセッションでBridgeを設定します。
+Codexアプリ内から始める場合は、新しいセッションで同じ標準入口を使います。
 
 ```text
-$lark-bridge-setup このPCを診断し、QR認証でLark Bridgeを初期設定してください。議事録も使います
+$lark-setup このPCを最初に自動診断し、Lark公式CLIとBridgeを不足分だけ順番に設定してください。議事録も使います
 ```
 
-Bridgeの疎通確認が終わった後、議事録が必要な場合だけ専用Pluginを追加します。Minutesと個人ドキュメントを使うプロファイルでは、土台側の設定時に追加範囲を説明し、明示承認後にQR付きデバイスフローを完了してからLark CLI identityを`user-default`にします。議事録Plugin自身はBridge設定を変更しません。
+Bridgeの疎通確認が終わった後、議事録が必要な場合だけ別Pluginを追加します。標準入口の依頼文に「議事録Pluginも導入」と含めた場合は、疎通確認後にセットアップがこの追加まで進めます。Minutesと個人ドキュメントを使うプロファイルでは、接続基盤側の設定時に追加範囲を説明し、明示承認後にQR付きデバイスフローを完了してからLark CLI identityを`user-default`にします。議事録Plugin自身はBridge設定を変更しません。
 
 ```bash
 codex plugin add sfl-gijiroku@momiji-lark-tools
@@ -95,7 +85,7 @@ codex plugin add lark-agent-bridge@momiji-lark-tools
 新しいセッションを開始し、次のように依頼します。
 
 ```text
-$lark-bridge-setup Lark BridgeをこのPCに初期設定してください
+$lark-setup このPCを最初に自動診断し、Lark公式CLIとBridgeを不足分だけ設定してください
 ```
 
 ## Claude Codeへインストール
@@ -110,7 +100,7 @@ Claude Codeで次を実行します。
 新しいセッションで次のように依頼します。
 
 ```text
-/lark-bridge-setup Lark BridgeをこのPCに初期設定してください
+/lark-setup このPCを最初に自動診断し、Lark公式CLIとBridgeを不足分だけ設定してください
 ```
 
 Bridgeの接続確認後、議事録Pluginを別に追加します。
@@ -129,7 +119,8 @@ Bridgeの接続確認後、議事録Pluginを別に追加します。
 
 | Skill | 用途 |
 |---|---|
-| `lark-bridge-setup` | 初回導入、QR登録、疎通確認 |
+| `lark-setup` | 新規導入の標準入口。自動診断から公式CLI、Bridge、疎通確認まで |
+| `lark-bridge-setup` | 旧利用者向けの互換入口 |
 | `lark-bridge-doctor` | 設定を変更しない状態診断 |
 | `lark-bridge-agent-config` | エージェント、権限、workspace、Developer相当ルールの設定 |
 | `lark-bridge-update` | Bridgeの互換性確認付き更新 |
@@ -168,7 +159,7 @@ python3 /path/to/plugin-creator/scripts/validate_plugin.py plugins/lark-agent-br
 python3 /path/to/plugin-creator/scripts/validate_plugin.py plugins/sfl-gijiroku
 ```
 
-議事録PluginとBridge用Pluginは独立して管理します。対応Bridge版は各Pluginの`compatibility.json`を正本とします。
+議事録PluginとLark接続基盤Pluginは独立して管理します。対応Bridge版は各Pluginの`compatibility.json`を正本とします。
 
 ## 秘密情報
 

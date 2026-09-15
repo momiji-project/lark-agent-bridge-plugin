@@ -244,7 +244,7 @@
               <pre id="codex-code"><code>codex plugin marketplace add momiji-project/lark-agent-bridge-plugin --ref main
 codex plugin add lark-agent-bridge@momiji-lark-tools</code></pre>
             </div>
-            <p class="run-prompt"><span>次に依頼</span><code>$lark-bridge-setup Lark BridgeをこのPCに設定してください</code></p>
+            <p class="run-prompt"><span>共通の開始コマンド</span><code>codex '$lark-setup このPCを最初に自動診断し、Lark公式CLIとBridgeを不足分だけ設定してください。'</code></p>
           </div>
           <div id="install-panel-claude" class="install-panel" role="tabpanel" aria-labelledby="install-tab-claude" hidden>
             <div class="code-block">
@@ -252,12 +252,12 @@ codex plugin add lark-agent-bridge@momiji-lark-tools</code></pre>
               <pre id="claude-code"><code>/plugin marketplace add momiji-project/lark-agent-bridge-plugin
 /plugin install lark-agent-bridge@momiji-lark-tools</code></pre>
             </div>
-            <p class="run-prompt"><span>次に依頼</span><code>/lark-bridge-setup Lark BridgeをこのPCに設定してください</code></p>
+            <p class="run-prompt"><span>次に実行</span><code>/lark-setup このPCを最初に自動診断し、Lark公式CLIとBridgeを不足分だけ設定してください</code></p>
           </div>
         </div>
 
         <div class="skills-grid">
-          <article><span>SETUP</span><h3>初回導入</h3><code>lark-bridge-setup</code><p>QR登録、プロファイル作成、疎通確認まで。</p></article>
+          <article><span>SETUP</span><h3>標準の初回入口</h3><code>lark-setup</code><p>環境診断、公式CLI、QR登録、Bridge、疎通確認まで。</p></article>
           <article><span>DOCTOR</span><h3>状態診断</h3><code>lark-bridge-doctor</code><p>設定を変更せず、接続と構成を点検。</p></article>
           <article><span>CONFIG</span><h3>エージェント設定</h3><code>lark-bridge-agent-config</code><p>権限、workspace、継続ルールを管理。</p></article>
           <article><span>UPDATE</span><h3>安全な更新</h3><code>lark-bridge-update</code><p>稼働状態と秘密情報を維持して更新。</p></article>

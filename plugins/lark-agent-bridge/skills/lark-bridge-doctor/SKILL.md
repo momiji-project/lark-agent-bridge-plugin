@@ -25,8 +25,8 @@ Keep diagnosis read-only unless the user separately asks for a repair.
 
 ## Common outcomes
 
-- Missing Bridge: use `lark-bridge-setup`.
-- Missing official Lark CLI: use `lark-bridge-setup`; do not install Bridge first.
+- Missing Bridge: use the standard entry `lark-setup`.
+- Missing official Lark CLI: use `lark-setup`; it installs the official CLI before Bridge.
 - Old Bridge: use `lark-bridge-update`.
 - Missing or wrong agent profile: use `lark-bridge-agent-config`.
 - Agent not logged in: ask the user to complete the agent's local login.

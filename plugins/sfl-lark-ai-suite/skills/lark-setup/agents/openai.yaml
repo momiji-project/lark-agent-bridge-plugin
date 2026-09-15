@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lark接続 かんたんセットアップ"
+  short_description: "最初に診断し、完了済みを飛ばして順番に設定"
+  default_prompt: "$lark-setup を使い、このPCを最初に自動診断して、Lark公式CLI・Bridge・議事録を不足分だけ順番に設定してください。"

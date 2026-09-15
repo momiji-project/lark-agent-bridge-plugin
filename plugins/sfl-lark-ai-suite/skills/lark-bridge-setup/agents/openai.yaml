@@ -1,4 +1,6 @@
 interface:
-  display_name: "Lark Bridge 初期設定"
-  short_description: "環境診断からQR認証・疎通確認まで一括設定"
-  default_prompt: "$lark-bridge-setup を使い、このPCを自動診断してQR認証でLark Bridgeを初期設定してください"
+  display_name: "旧互換：Lark Bridgeセットアップ"
+  short_description: "既存利用者向けの旧入口（新規はlark-setup）"
+  default_prompt: "$lark-bridge-setup を使い、既存の呼び出し名でLark接続基盤を診断・設定してください。"
+policy:
+  allow_implicit_invocation: false

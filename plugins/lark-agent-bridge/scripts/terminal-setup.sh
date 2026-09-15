@@ -250,34 +250,6 @@ if [ "$RUNTIME_CHECK_ONLY" -eq 1 ]; then
   exit "$RUNTIME_STATUS"
 fi
 
-if [ -z "$AGENT" ]; then
-  HAS_CODEX=0
-  HAS_CLAUDE=0
-  command -v codex >/dev/null 2>&1 && HAS_CODEX=1
-  command -v claude >/dev/null 2>&1 && HAS_CLAUDE=1
-  if [ "$HAS_CODEX" -eq 1 ] && [ "$HAS_CLAUDE" -eq 0 ]; then
-    AGENT="codex"
-  elif [ "$HAS_CODEX" -eq 0 ] && [ "$HAS_CLAUDE" -eq 1 ]; then
-    AGENT="claude"
-  elif [ "$HAS_CODEX" -eq 1 ] && [ "$HAS_CLAUDE" -eq 1 ] && is_interactive; then
-    printf '接続するエージェントを選んでください。\n  1) Codex\n  2) Claude Code\n選択 [1]: '
-    read -r agent_choice
-    case "$agent_choice" in 2) AGENT="claude" ;; *) AGENT="codex" ;; esac
-  else
-    printf 'CodexまたはClaude Codeが見つかりません。先に利用するエージェントを導入してください。\n' >&2
-    exit 30
-  fi
-fi
-
-case "$AGENT" in
-  codex|claude) ;;
-  *) printf -- '--agent must be codex or claude.\n' >&2; exit 2 ;;
-esac
-if ! command -v "$AGENT" >/dev/null 2>&1; then
-  printf '%s is not installed or not available on PATH.\n' "$AGENT" >&2
-  exit 30
-fi
-
 if [ "$RUNTIME_STATUS" -ne 0 ] && [ "$INSTALL_NODE_LTS" -ne 1 ]; then
   printf '\nNode.jsとnpmが必要です。Node.js LTSをこのPCへ導入します。\n'
   if ask_yes_no '続行しますか？ [y/N]' no; then
@@ -299,6 +271,50 @@ fi
 
 PATH="$PATH:/usr/local/bin:/opt/homebrew/bin"
 export PATH
+
+NODE_COMMAND="$(command -v node || true)"
+if [ -z "$NODE_COMMAND" ]; then
+  printf 'Node.jsの導入後もnodeコマンドを確認できません。新しいTerminalで同じセットアップを再実行してください。\n' >&2
+  exit 32
+fi
+
+printf '\nLark接続基盤の自動診断を行います（この段階では設定を変更しません）。\n'
+set +e
+"$NODE_COMMAND" "$MANAGER" preflight --json
+PREFLIGHT_STATUS=$?
+set -e
+if [ "$PREFLIGHT_STATUS" -ne 0 ]; then
+  printf '診断で不足または不整合が見つかりました。合格済みの項目は再利用し、不足分だけを次の工程で整えます。\n'
+fi
+
+if [ -z "$AGENT" ]; then
+  HAS_CODEX=0
+  HAS_CLAUDE=0
+  command -v codex >/dev/null 2>&1 && HAS_CODEX=1
+  command -v claude >/dev/null 2>&1 && HAS_CLAUDE=1
+  if [ "$HAS_CODEX" -eq 1 ] && [ "$HAS_CLAUDE" -eq 0 ]; then
+    AGENT="codex"
+  elif [ "$HAS_CODEX" -eq 0 ] && [ "$HAS_CLAUDE" -eq 1 ]; then
+    AGENT="claude"
+  elif [ "$HAS_CODEX" -eq 1 ] && [ "$HAS_CLAUDE" -eq 1 ] && is_interactive; then
+    printf '診断ではCodexとClaude Codeの両方を確認しました。Bridgeへ接続する方を選んでください。\n  1) Codex\n  2) Claude Code\n選択 [1]: '
+    read -r agent_choice
+    case "$agent_choice" in 2) AGENT="claude" ;; *) AGENT="codex" ;; esac
+  else
+    printf 'CodexまたはClaude Codeが見つかりません。先に利用するエージェントを導入してください。\n' >&2
+    exit 30
+  fi
+fi
+
+case "$AGENT" in
+  codex|claude) ;;
+  *) printf -- '--agent must be codex or claude.\n' >&2; exit 2 ;;
+esac
+if ! command -v "$AGENT" >/dev/null 2>&1; then
+  printf '%s is not installed or not available on PATH.\n' "$AGENT" >&2
+  exit 30
+fi
+
 ensure_agent_login
 
 if [ "$DRY_RUN" -eq 1 ]; then
@@ -343,7 +359,6 @@ if [ -z "$LARK_SCOPE" ]; then
 fi
 
 BRIDGE_COMMAND="$(command -v lark-channel-bridge || true)"
-NODE_COMMAND="$(command -v node || true)"
 LARK_CLI_COMMAND="$(command -v lark-cli || true)"
 BRIDGE_HOME="${LARK_CHANNEL_HOME:-$HOME/.lark-channel}"
 if [ -z "$BRIDGE_COMMAND" ] || [ -z "$NODE_COMMAND" ] || [ -z "$LARK_CLI_COMMAND" ]; then

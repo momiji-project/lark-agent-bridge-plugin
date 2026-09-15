@@ -1,9 +1,11 @@
 ---
 name: lark-bridge-setup
-description: Install and initialize lark-channel-bridge for Claude Code or Codex on Windows or macOS, including Node.js/npm bootstrap, official Lark CLI setup, QR registration, one profile, a safe permission preset, daemon startup, and connectivity verification. Use when a user asks to install, set up, onboard, or connect Lark Bridge, Feishu Bridge, Claude Code from Lark, or Codex from Lark.
+description: Legacy compatibility entry for existing users who explicitly invoke lark-bridge-setup. New initial setup requests should use lark-setup instead.
 ---
 
 # Set up Lark Agent Bridge
+
+This is a compatibility entry. For a new installation, use `lark-setup` as the single standard entry point.
 
 Use the plugin's native bootstrap and `scripts/bridge-manager.mjs`; do not recreate Bridge behavior or hand-edit credential files.
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lark接続 かんたんセットアップ"
+  short_description: "PCを診断し、公式CLIとBridgeを不足分だけ導入"
+  default_prompt: "$lark-setup を使い、このPCを最初に自動診断して、Node.js・Lark公式CLI・Bridgeを不足分だけ順番に設定してください。議事録も使います。"

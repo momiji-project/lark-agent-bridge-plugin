@@ -1,7 +1,7 @@
 {
   "name": "lark-agent-bridge",
-  "version": "0.2.4",
-  "description": "lark-channel-bridgeをClaude CodeまたはCodex向けに安全に導入・設定・診断・更新するプラグイン",
+  "version": "0.2.5",
+  "description": "Mac/Windowsを最初に診断し、Node.js、Lark公式CLI、lark-channel-bridgeを不足分だけ順番に整えるLark接続基盤プラグイン",
   "author": {
     "name": "Salon Flow Love"
   },

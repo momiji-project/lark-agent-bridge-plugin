@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "lark-agent-bridge",
-      "description": "lark-channel-bridgeの導入、エージェント設定、診断、更新を支援します。",
+      "description": "Mac/Windowsを最初に診断し、Node.js、Lark公式CLI、lark-channel-bridgeを不足分だけ順番に整えるLark接続基盤です。",
       "source": "./plugins/lark-agent-bridge",
       "category": "productivity"
     },

@@ -1,6 +1,6 @@
 {
   "name": "sfl-lark-ai-suite",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Lark IMとAIエージェントを接続し、MinutesからLarkドキュメントと共有用画像の議事録を作る機能を一つにまとめて導入・設定します。",
   "author": {
     "name": "Salon Flow Love"
@@ -21,7 +21,7 @@
     ],
     "websiteURL": "https://sfl-lark-ai-bridge-guide.pages.dev/",
     "defaultPrompt": [
-      "Bridgeと議事録をおすすめ設定で一括導入してください。",
+      "$lark-setup を使い、このPCを最初に診断してLark公式CLI・Bridge・議事録を不足分だけ順番に設定してください。",
       "Lark Bridgeだけを設定してください。",
       "議事録画像のデザインとロゴを詳しく設定してください。"
     ]
