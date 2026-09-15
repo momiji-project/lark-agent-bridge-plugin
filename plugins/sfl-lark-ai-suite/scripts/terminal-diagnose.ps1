@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 
 [CmdletBinding()]
 param(
@@ -78,4 +78,3 @@ if ($runtimeStatus -ne 0) {
 }
 
 exit 0
-
