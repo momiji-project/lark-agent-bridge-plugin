@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "lark-agent-bridge",
-      "description": "Mac/Windowsを最初に診断し、Node.js、Lark公式CLI、lark-channel-bridgeを不足分だけ順番に整えるLark接続基盤です。",
+      "description": "Mac/Windows共通の変更しない診断と、その結果に基づくNode.js、Lark公式CLI、Bridge導入を別コマンドで提供するLark接続基盤です。",
       "source": "./plugins/lark-agent-bridge",
       "category": "productivity"
     },
@@ -21,7 +21,7 @@
     },
     {
       "name": "sfl-lark-ai-suite",
-      "description": "Bridge接続と、Lark Minutesからドキュメント・共有用画像を作る議事録機能を一つにまとめて導入・設定します。",
+      "description": "既存利用者向け統合Plugin。変更しない診断と、診断後のBridge・議事録導入を別コマンドで提供します。",
       "source": "./plugins/sfl-lark-ai-suite",
       "category": "productivity"
     }

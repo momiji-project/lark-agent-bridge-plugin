@@ -26,8 +26,12 @@ jobs:
           bash plugins/lark-agent-bridge/scripts/bootstrap.sh --runtime-only
           bash -n plugins/lark-agent-bridge/scripts/terminal-setup.sh
           bash plugins/lark-agent-bridge/scripts/terminal-setup.sh --runtime-check-only
+          bash -n plugins/lark-agent-bridge/scripts/terminal-diagnose.sh
+          bash plugins/lark-agent-bridge/scripts/terminal-diagnose.sh
           bash -n plugins/sfl-lark-ai-suite/scripts/bootstrap.sh
           bash plugins/sfl-lark-ai-suite/scripts/bootstrap.sh --check-only
+          bash -n plugins/sfl-lark-ai-suite/scripts/terminal-diagnose.sh
+          bash plugins/sfl-lark-ai-suite/scripts/terminal-diagnose.sh
           node --test plugins/lark-agent-bridge/tests/bridge-manager.test.mjs plugins/sfl-lark-ai-suite/tests/bridge-manager.test.mjs plugins/sfl-lark-ai-suite/tests/gijiroku-config.test.mjs plugins/sfl-lark-ai-suite/tests/gijiroku-document.test.mjs plugins/sfl-gijiroku/tests/gijiroku-config.test.mjs plugins/sfl-gijiroku/tests/gijiroku-document.test.mjs
       - name: Verify tag matches manifest
         run: |

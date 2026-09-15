@@ -1,11 +1,11 @@
 ---
 name: lark-bridge-setup
-description: Legacy compatibility entry for existing users who explicitly invoke lark-bridge-setup. New initial setup requests should use lark-setup instead.
+description: Legacy compatibility entry for existing users who explicitly invoke lark-bridge-setup. New users must run the read-only lark-diagnose command first, then use lark-setup only after reviewing the result.
 ---
 
 # Set up Lark Agent Bridge
 
-This is a compatibility entry. For a new installation, use `lark-setup` as the single standard entry point.
+This is a compatibility entry. For a new installation, run `lark-diagnose` first and stop after reporting the read-only result. Use `lark-setup` only when the user then explicitly requests installation.
 
 Use the plugin's native bootstrap and `scripts/bridge-manager.mjs`; do not recreate Bridge behavior or hand-edit credential files.
 

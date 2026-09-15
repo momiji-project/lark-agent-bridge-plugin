@@ -1,0 +1,6 @@
+interface:
+  display_name: "Lark接続環境を診断"
+  short_description: "PCを変更せず、Lark連携の不足だけを確認"
+  default_prompt: "$lark-diagnose を使い、このPCのLark接続環境を変更せず診断してください。導入や修復は行わないでください。"
+policy:
+  allow_implicit_invocation: true

@@ -54,6 +54,7 @@ for (const [label, marketplace] of [["Codex", codexMarketplace], ["Claude", clau
 
 const expectedSkills = [
   "sfl-lark-setup",
+  "lark-diagnose",
   "lark-setup",
   "lark-bridge-setup",
   "lark-bridge-doctor",
@@ -74,6 +75,8 @@ for (const skillName of expectedSkills) {
 
 for (const required of [
   "scripts/bridge-manager.mjs",
+  "scripts/terminal-diagnose.sh",
+  "scripts/terminal-diagnose.ps1",
   "scripts/gijiroku-config.mjs",
   "scripts/deliver-image.mjs",
   "scripts/render_minutes.py",

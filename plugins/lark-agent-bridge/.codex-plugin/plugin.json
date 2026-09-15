@@ -1,7 +1,7 @@
 {
   "name": "lark-agent-bridge",
-  "version": "0.2.5",
-  "description": "Mac/Windowsを最初に診断し、Node.js、Lark公式CLI、lark-channel-bridgeを不足分だけ順番に整えるLark接続基盤Plugin。",
+  "version": "0.2.6",
+  "description": "Mac/Windows共通の読取専用診断と、その結果に基づくLark公式CLI・Bridge導入を別コマンドで提供するLark接続基盤Plugin。",
   "author": {
     "name": "Salon Flow Love"
   },
@@ -10,15 +10,16 @@
   "keywords": ["lark", "feishu", "bridge", "claude-code", "codex"],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Lark接続基盤セットアップ",
-    "shortDescription": "Node.js・Lark公式CLI・Bridgeを診断して不足分だけ導入",
-    "longDescription": "Mac/WindowsのOSと依存関係を最初に自動診断し、必要な場合だけNode.js/npm、Lark公式CLI、Lark公式Channel SDKを使うlark-channel-bridgeの順で整えます。QR登録、Minutes/DocsのQR付きデバイス認証、プロファイル作成、安全プリセット、疎通確認までを一つの入口から進めます。秘密情報はPluginやGitへ保存しません。",
+    "displayName": "Lark接続診断・基盤セットアップ",
+    "shortDescription": "変更しない診断と、診断後の基盤導入を分離",
+    "longDescription": "最初にMac/Windows共通の読取専用診断だけを実行し、PCを変更せずOS、Node.js/npm、AIエージェント、Lark公式CLI、Bridge、既存プロファイルを確認します。診断結果の確認後、別コマンドで必要な場合だけNode.js/npm、Lark公式CLI、Lark公式Channel SDKを使うlark-channel-bridgeの順に不足分を整えます。秘密情報はPluginやGitへ保存しません。",
     "developerName": "Salon Flow Love",
     "category": "Productivity",
     "capabilities": ["Local setup", "Diagnostics", "Agent configuration"],
     "websiteURL": "https://sfl-lark-ai-bridge-guide.pages.dev/",
     "defaultPrompt": [
-      "$lark-setup を使い、このPCを自動診断してLark公式CLIとBridgeを不足分だけ設定してください。議事録も使います。",
+      "$lark-diagnose を使い、このPCのLark接続環境を変更せず診断してください。導入や修復は行わないでください。",
+      "$lark-setup を使い、完了済みの診断結果をもとにLark公式CLIとBridgeを不足分だけ設定してください。議事録も使います。",
       "Lark Bridgeの状態を診断してください",
       "Bridgeで使うエージェント設定を整えてください"
     ]

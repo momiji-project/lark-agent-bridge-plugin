@@ -1,15 +1,17 @@
 ---
 name: lark-setup
-description: MacまたはWindowsのPCを最初に自動診断し、Node.js/npm、Lark公式CLI、lark-channel-bridgeを不足分だけ正しい順序で導入・接続する、Lark連携の標準初期セットアップ入口。ユーザーが「Lark連携を導入」「最初から診断」「Mac/Windows共通で設定」「議事録を使えるように」と依頼したときに使う。
+description: 独立した読取専用診断の完了後に、MacまたはWindowsへNode.js/npm、Lark公式CLI、lark-channel-bridgeを不足分だけ正しい順序で導入・接続するLark基盤セットアップ。「診断結果をもとに導入」「不足分を設定」と明示された場合に使う。診断だけの依頼には使わない。
 ---
 
 # Lark接続基盤セットアップ
 
-新規導入では、このSkillを唯一の標準入口として扱う。OSをユーザーに選ばせず、診断結果から必要な処理だけへ分岐する。
+このSkillは、独立した `$lark-diagnose` による読取専用診断の後にだけ使う基盤導入入口である。OSをユーザーに選ばせず、診断結果から必要な処理だけへ分岐する。
+
+診断結果がまだ無い場合は、このSkill内で導入へ進まない。先に `$lark-diagnose` を実行し、結果を報告して一度止める。利用者がその後に導入を明示した場合だけ、このSkillを実行する。
 
 ## 必須の順序
 
-1. 設定を変更しない診断を最初に行う。
+1. 直前の `$lark-diagnose` の結果を確認し、導入直前の安全な再確認を行う。
 2. Node.js 20.12以上とnpmが不足している場合だけ、変更内容を説明して承認を得てからNode.js LTSを導入する。
 3. Lark公式CLI `@larksuite/cli` を確認・導入する。
 4. 公式CLIが正常になった後で `lark-channel-bridge` を確認・導入する。
@@ -48,8 +50,9 @@ $gijiroku-setup おすすめ設定で初期設定してください
 
 ## 互換性と安全
 
-- 旧入口 `$lark-bridge-setup` は既存利用者向け互換名として扱う。新規案内では `$lark-setup` を使う。
+- 新規案内の最初の入口は診断専用の `$lark-diagnose` とし、基盤導入はその後の `$lark-setup` とする。
+- 旧入口 `$lark-bridge-setup` は既存利用者向け互換名として扱う。
 - `lark-channel-bridge` はLark公式Channel SDKを利用する上流Bridgeであり、Bridgeパッケージ自体をLark公式製品とは表現しない。
 - App Secret、token、credentialをチャット・Git・ログへ出さない。
 - 正常なLark CLIやBridgeを再導入しない。
-- 診断だけを求められた場合は変更せず、`lark-bridge-doctor` 相当の読取結果を返す。
+- 診断だけを求められた場合はこのSkillを使わず、`$lark-diagnose` へ切り替える。

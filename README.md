@@ -2,9 +2,9 @@
 
 Lark / Feishu からローカルのClaude CodeまたはCodexを利用するための接続基盤Pluginと、Lark Minutesから議事録を作るPluginを別々に配布します。接続基盤にはNode.js/npmの診断、Lark公式CLI、Bridge、QR認証、疎通確認までを含め、議事録の要約・デザイン設定とは分離します。
 
-## 推奨: 一つの入口から診断し、土台と追加機能を順番に導入
+## 正しい順序: 診断だけ → 基盤導入 → 議事録Plugin
 
-導入は次のゲートを順番に通します。Node.jsやnpmが無い場合もセットアップの途中で止めたままにせず、変更内容を説明して承認を得た後、OS別のブートストラップでNode.jsから整備します。前のゲートが完了するまでBridgeや議事録Pluginを後追い導入しません。
+診断と導入は別コマンドです。最初の `$lark-diagnose` は状態を読むだけで、Node.jsの追加、パッケージ更新、設定変更、認証、Bridge起動を一切行いません。診断結果を確認した後、必要な場合だけ `$lark-setup` を明示実行します。
 
 1. macOS / Windows / LinuxとCPUアーキテクチャを判定
 2. Codex / Claude Codeの導入とログイン状態を確認
@@ -15,32 +15,44 @@ Lark / Feishu からローカルのClaude CodeまたはCodexを利用するた�
 7. 議事録を使う場合だけ、QR付きデバイスフローでMinutes/Docsを認証
 8. 議事録が必要な利用者だけ、別Plugin `sfl-gijiroku` を追加
 
-最初にMarketplaceを登録し、Lark接続基盤Pluginを導入します。Plugin追加後の標準入口は `$lark-setup` だけです。
+最初にMarketplaceを登録し、Lark接続基盤Plugin本体を追加します。Plugin追加は診断コマンドを利用可能にするための準備であり、Lark CLIやBridgeの導入ではありません。
 
 ```bash
 codex plugin marketplace add momiji-project/lark-agent-bridge-plugin --ref main
 codex plugin add lark-agent-bridge@momiji-lark-tools
 ```
 
-### Mac / Windows共通の開始コマンド
+### 1. Mac / Windows共通の診断専用コマンド
 
-Plugin追加後、新しいTerminalまたはPowerShellで次の1行を実行します。MacとWindowsで同じです。`codex`を対話モードで開くため、Node.js追加やQR認証など、途中で必要な確認にもそのまま回答できます。
+Plugin追加後、新しいTerminalまたはPowerShellで次の1行だけを実行します。MacとWindowsで同じです。
 
 ```text
-codex '$lark-setup このPCを最初に自動診断し、Node.js・npm・Lark公式CLI・Bridgeを不足分だけ順番に設定してください。接続確認後、議事録Pluginも導入してください。'
+codex '$lark-diagnose このPCのLark接続環境を変更せず診断してください。導入や修復は行わないでください。'
 ```
 
-この一つの入口がOSを判定し、最初に設定を変更しない診断を実行します。合格済みの項目は飛ばし、Node.js/npm、Lark公式CLI、Bridge、プロファイル、QR認証、権限、起動、疎通確認を不足分だけ順番に処理します。Lark公式CLIを必ずBridgeより先に整えます。Node.jsの追加、既存プロファイルの再利用、個人Larkデータへのアクセスは、ターミナル上で確認してから実行します。
+このコマンドはOSを自動判定し、OS/CPU、Node.js/npm、Codex/Claude Code、Lark公式CLI、Bridge、既存プロファイル、常駐状態を読み取ります。インストール・更新・設定変更・起動・再起動・認証は行わず、診断結果を返した時点で止まります。
 
-OS別の `terminal-setup.sh` / `terminal-setup.ps1` はPlugin内部の実装です。通常利用者が選ぶコマンドではなく、`$lark-setup` が自動で適切な方へ分岐します。
+OS別の `terminal-diagnose.sh` / `terminal-diagnose.ps1` はPlugin内部の実装です。利用者がMac/Windowsを選ぶ必要はありません。
+
+### 2. 診断結果の後、必要な場合だけ基盤を導入
+
+診断結果を確認し、導入を進めると判断した場合だけ、別の次のコマンドを実行します。
+
+```text
+codex '$lark-setup 診断結果をもとに、Node.js・npm・Lark公式CLI・Bridgeの不足分だけを順番に設定してください。議事録も使います。'
+```
+
+`$lark-setup` は導入専用です。Lark公式CLIを必ずBridgeより先に整えます。Node.jsの追加、既存プロファイルの再利用、個人Larkデータへのアクセスは、Terminal上で確認してから実行します。
 
 ### エージェントへ依頼する場合
 
-Codexアプリ内から始める場合は、新しいセッションで同じ標準入口を使います。
+Codexアプリ内から始める場合も、最初は診断専用入口だけを使います。
 
 ```text
-$lark-setup このPCを最初に自動診断し、Lark公式CLIとBridgeを不足分だけ順番に設定してください。議事録も使います
+$lark-diagnose このPCのLark接続環境を変更せず診断してください。導入や修復は行わないでください
 ```
+
+診断結果を確認後、導入する場合だけ `$lark-setup` を別途依頼します。
 
 Bridgeの疎通確認が終わった後、議事録が必要な場合だけ別Pluginを追加します。標準入口の依頼文に「議事録Pluginも導入」と含めた場合は、疎通確認後にセットアップがこの追加まで進めます。Minutesと個人ドキュメントを使うプロファイルでは、接続基盤側の設定時に追加範囲を説明し、明示承認後にQR付きデバイスフローを完了してからLark CLI identityを`user-default`にします。議事録Plugin自身はBridge設定を変更しません。
 
@@ -82,10 +94,16 @@ codex plugin marketplace add momiji-project/lark-agent-bridge-plugin --ref main
 codex plugin add lark-agent-bridge@momiji-lark-tools
 ```
 
-新しいセッションを開始し、次のように依頼します。
+新しいセッションを開始し、最初は診断だけを依頼します。
 
 ```text
-$lark-setup このPCを最初に自動診断し、Lark公式CLIとBridgeを不足分だけ設定してください
+$lark-diagnose このPCのLark接続環境を変更せず診断してください。導入や修復は行わないでください
+```
+
+診断結果を確認し、導入する場合だけ次を別途依頼します。
+
+```text
+$lark-setup 診断結果をもとに、Lark公式CLIとBridgeの不足分だけを設定してください
 ```
 
 ## Claude Codeへインストール
@@ -97,10 +115,16 @@ Claude Codeで次を実行します。
 /plugin install lark-agent-bridge@momiji-lark-tools
 ```
 
-新しいセッションで次のように依頼します。
+新しいセッションで最初は診断だけを依頼します。
 
 ```text
-/lark-setup このPCを最初に自動診断し、Lark公式CLIとBridgeを不足分だけ設定してください
+/lark-diagnose このPCのLark接続環境を変更せず診断してください。導入や修復は行わないでください
+```
+
+診断結果を確認し、導入する場合だけ次を別途依頼します。
+
+```text
+/lark-setup 診断結果をもとに、Lark公式CLIとBridgeの不足分だけを設定してください
 ```
 
 Bridgeの接続確認後、議事録Pluginを別に追加します。
@@ -119,7 +143,8 @@ Bridgeの接続確認後、議事録Pluginを別に追加します。
 
 | Skill | 用途 |
 |---|---|
-| `lark-setup` | 新規導入の標準入口。自動診断から公式CLI、Bridge、疎通確認まで |
+| `lark-diagnose` | 新規導入の最初の入口。PCを変更しない独立診断だけを実行 |
+| `lark-setup` | 診断結果の確認後に、公式CLI、Bridge、疎通確認を行う導入入口 |
 | `lark-bridge-setup` | 旧利用者向けの互換入口 |
 | `lark-bridge-doctor` | 設定を変更しない状態診断 |
 | `lark-bridge-agent-config` | エージェント、権限、workspace、Developer相当ルールの設定 |

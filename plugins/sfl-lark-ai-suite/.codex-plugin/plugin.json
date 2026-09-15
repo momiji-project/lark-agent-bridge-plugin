@@ -1,15 +1,15 @@
 {
   "name": "sfl-lark-ai-suite",
-  "version": "0.2.5",
-  "description": "Lark IMとAIエージェントを接続し、MinutesからLarkドキュメントと共有用画像の議事録を作る機能を一つにまとめて導入・設定します。",
+  "version": "0.2.6",
+  "description": "既存利用者向け統合Plugin。変更しないLark環境診断と、診断後の基盤・議事録導入を別コマンドで提供します。",
   "author": {
     "name": "Salon Flow Love"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "SFL Lark AI Suite",
-    "shortDescription": "Lark接続と議事録を一つのPluginで導入",
-    "longDescription": "Lark公式Channel SDKを使うBridgeの導入・設定・診断・更新と、Lark Minutesの文字起こしからLarkドキュメントと共有用画像を作る議事録機能を一つのPluginに収録しています。おすすめ一括設定なら、必要な確認だけでBridgeと議事録をまとめて準備できます。",
+    "shortDescription": "診断専用入口を備えた既存利用者向け統合Plugin",
+    "longDescription": "既存利用者向けに、Lark接続基盤と議事録機能を一つのPluginへ収録しています。最初は読取専用の診断だけを実行し、その結果の確認後に別コマンドでLark公式CLI、Bridge、議事録を不足分だけ準備します。",
     "developerName": "Salon Flow Love",
     "category": "Productivity",
     "capabilities": [
@@ -21,7 +21,8 @@
     ],
     "websiteURL": "https://sfl-lark-ai-bridge-guide.pages.dev/",
     "defaultPrompt": [
-      "$lark-setup を使い、このPCを最初に診断してLark公式CLI・Bridge・議事録を不足分だけ順番に設定してください。",
+      "$lark-diagnose を使い、このPCのLark接続環境を変更せず診断してください。導入や修復は行わないでください。",
+      "$lark-setup を使い、完了済みの診断結果をもとにLark公式CLI・Bridge・議事録を不足分だけ順番に設定してください。",
       "Lark Bridgeだけを設定してください。",
       "議事録画像のデザインとロゴを詳しく設定してください。"
     ]

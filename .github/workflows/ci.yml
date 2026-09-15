@@ -66,8 +66,12 @@ jobs:
           bash plugins/lark-agent-bridge/scripts/bootstrap.sh --runtime-only
           bash -n plugins/lark-agent-bridge/scripts/terminal-setup.sh
           bash plugins/lark-agent-bridge/scripts/terminal-setup.sh --runtime-check-only
+          bash -n plugins/lark-agent-bridge/scripts/terminal-diagnose.sh
+          bash plugins/lark-agent-bridge/scripts/terminal-diagnose.sh
           bash -n plugins/sfl-lark-ai-suite/scripts/bootstrap.sh
           bash plugins/sfl-lark-ai-suite/scripts/bootstrap.sh --check-only
+          bash -n plugins/sfl-lark-ai-suite/scripts/terminal-diagnose.sh
+          bash plugins/sfl-lark-ai-suite/scripts/terminal-diagnose.sh
       - name: Check Windows bootstrap
         if: runner.os == 'Windows'
         shell: powershell
@@ -75,4 +79,6 @@ jobs:
           powershell -NoProfile -ExecutionPolicy Bypass -File plugins/lark-agent-bridge/scripts/bootstrap-windows.ps1 -CheckOnly
           powershell -NoProfile -ExecutionPolicy Bypass -File plugins/lark-agent-bridge/scripts/bootstrap-windows.ps1 -RuntimeOnly
           powershell -NoProfile -ExecutionPolicy Bypass -File plugins/lark-agent-bridge/scripts/terminal-setup.ps1 -RuntimeCheckOnly
+          powershell -NoProfile -ExecutionPolicy Bypass -File plugins/lark-agent-bridge/scripts/terminal-diagnose.ps1 -SyntaxCheckOnly
           powershell -NoProfile -ExecutionPolicy Bypass -File plugins/sfl-lark-ai-suite/scripts/bootstrap-windows.ps1 -CheckOnly
+          powershell -NoProfile -ExecutionPolicy Bypass -File plugins/sfl-lark-ai-suite/scripts/terminal-diagnose.ps1 -SyntaxCheckOnly

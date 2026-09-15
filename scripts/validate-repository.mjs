@@ -42,6 +42,8 @@ const shellBootstrap = join(pluginRoot, 'scripts', 'bootstrap.sh')
 const windowsBootstrap = join(pluginRoot, 'scripts', 'bootstrap-windows.ps1')
 const shellTerminalSetup = join(pluginRoot, 'scripts', 'terminal-setup.sh')
 const windowsTerminalSetup = join(pluginRoot, 'scripts', 'terminal-setup.ps1')
+const shellTerminalDiagnose = join(pluginRoot, 'scripts', 'terminal-diagnose.sh')
+const windowsTerminalDiagnose = join(pluginRoot, 'scripts', 'terminal-diagnose.ps1')
 
 for (const manifest of [codexManifest, claudeManifest]) {
   requireValue(manifest?.name === 'lark-agent-bridge', 'plugin manifest name must be lark-agent-bridge')
@@ -62,6 +64,10 @@ const shellTerminalSetupStat = await lstat(shellTerminalSetup)
 requireValue(shellTerminalSetupStat.isFile(), 'macOS terminal setup must be a regular file')
 requireValue((shellTerminalSetupStat.mode & 0o111) !== 0, 'macOS terminal setup must be executable')
 requireValue((await lstat(windowsTerminalSetup)).isFile(), 'Windows terminal setup must be a regular file')
+const shellTerminalDiagnoseStat = await lstat(shellTerminalDiagnose)
+requireValue(shellTerminalDiagnoseStat.isFile(), 'macOS diagnostic must be a regular file')
+requireValue((shellTerminalDiagnoseStat.mode & 0o111) !== 0, 'macOS diagnostic must be executable')
+requireValue((await lstat(windowsTerminalDiagnose)).isFile(), 'Windows diagnostic must be a regular file')
 
 function requireOrderedSnippets(source, snippets, label) {
   let cursor = -1
@@ -74,6 +80,45 @@ function requireOrderedSnippets(source, snippets, label) {
 
 const shellTerminalSource = await readFile(shellTerminalSetup, 'utf8')
 const windowsTerminalSource = await readFile(windowsTerminalSetup, 'utf8')
+const shellDiagnosticSource = await readFile(shellTerminalDiagnose, 'utf8')
+const windowsDiagnosticSource = await readFile(windowsTerminalDiagnose, 'utf8')
+
+requireOrderedSnippets(shellDiagnosticSource, [
+  'bash "$BOOTSTRAP" --check-only',
+  'node "$MANAGER" preflight --json',
+  'lark-channel-bridge profile list',
+  'lark-channel-bridge ps',
+], 'macOS/Linux read-only diagnostic')
+requireOrderedSnippets(windowsDiagnosticSource, [
+  '& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $Bootstrap -CheckOnly',
+  '& $node $Manager preflight --json',
+  '& $bridge profile list',
+  '& $bridge ps',
+], 'Windows read-only diagnostic')
+
+const mutatingDiagnosticPatterns = [
+  /\b(?:npm|winget)\s+(?:install|upgrade|uninstall)\b/i,
+  /\bauth\s+login\b/i,
+  /\bprofile\s+(?:create|remove|delete)\b/i,
+  /\b(?:start|stop|restart)\s+--profile\b/i,
+  /\$MANAGER["']?\s+(?:install|update|preset|rules)\b/i,
+]
+for (const [label, source] of [
+  ['macOS/Linux diagnostic', shellDiagnosticSource],
+  ['Windows diagnostic', windowsDiagnosticSource],
+]) {
+  for (const pattern of mutatingDiagnosticPatterns) {
+    requireValue(!pattern.test(source), `${label}: contains a prohibited mutating command (${pattern})`)
+  }
+  requireValue(source.includes('PCの状態は変更していません'), `${label}: missing explicit no-change completion message`)
+}
+
+const diagnoseSkillSource = await readFile(join(pluginRoot, 'skills', 'lark-diagnose', 'SKILL.md'), 'utf8')
+const diagnoseAgentSource = await readFile(join(pluginRoot, 'skills', 'lark-diagnose', 'agents', 'openai.yaml'), 'utf8')
+const setupAgentSource = await readFile(join(pluginRoot, 'skills', 'lark-setup', 'agents', 'openai.yaml'), 'utf8')
+requireValue(diagnoseSkillSource.includes('これは基盤導入ではない'), 'lark-diagnose must be independent from setup')
+requireValue(diagnoseAgentSource.includes('allow_implicit_invocation: true'), 'lark-diagnose must be the automatic first route')
+requireValue(setupAgentSource.includes('allow_implicit_invocation: false'), 'lark-setup must require explicit invocation after diagnosis')
 requireOrderedSnippets(shellTerminalSource, [
   'bash "$BOOTSTRAP" --check-only',
   '"$NODE_COMMAND" "$MANAGER" preflight --json',
