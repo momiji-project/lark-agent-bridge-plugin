@@ -1,6 +1,6 @@
 {
   "name": "lark-agent-bridge",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Plugin導入前の独立診断結果に基づき、Lark公式CLI・Bridgeの不足分を整えるLark接続基盤Plugin。導入後の読取専用再診断も提供します。",
   "author": {
     "name": "Salon Flow Love"
@@ -12,7 +12,7 @@
   "interface": {
     "displayName": "Lark接続基盤セットアップ",
     "shortDescription": "事前診断後に公式CLIとBridgeの不足分だけを導入",
-    "longDescription": "Pluginを追加する前に行ったMac/Windows共通の読取専用診断結果をもとに、必要な場合だけNode.js/npm、Lark公式CLI、Lark公式Channel SDKを使うlark-channel-bridgeの順に不足分を整えます。Plugin導入後の再診断も読取専用で実行できます。秘密情報はPluginやGitへ保存しません。",
+    "longDescription": "Pluginを追加する前に行ったMac/Windows別の読取専用診断結果をもとに、必要な場合だけNode.js/npm、Lark公式CLI、Lark公式Channel SDKを使うlark-channel-bridgeの順に不足分を整えます。Plugin導入後の再診断も読取専用で実行できます。秘密情報はPluginやGitへ保存しません。",
     "developerName": "Salon Flow Love",
     "category": "Productivity",
     "capabilities": ["Local setup", "Diagnostics", "Agent configuration"],

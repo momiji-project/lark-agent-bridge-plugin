@@ -4,10 +4,10 @@ Lark / Feishu からローカルのClaude CodeまたはCodexを利用するた�
 
 ## 正しい順序: 診断だけ → 基盤導入 → 議事録Plugin
 
-診断と導入は別コマンドです。最初の診断はPluginを入れず、Codex標準の読取専用モードで実行します。Node.jsの追加、パッケージ更新、設定変更、認証、Bridge起動は一切行いません。診断結果を確認した後、必要な場合だけ接続基盤Pluginを追加し、`$lark-setup` を明示実行します。
+診断と導入は別コマンドです。最初の診断はPluginを入れず、SFLが公開するOS別の読取専用スクリプトをTerminalまたはPowerShellで直接実行します。Node.jsの追加、パッケージ更新、設定変更、認証、Bridge起動は一切行いません。診断結果を確認した後、必要な場合だけ接続基盤Pluginを追加し、`$lark-setup` を明示実行します。
 
 1. macOS / Windows / LinuxとCPUアーキテクチャを判定
-2. Codex / Claude Codeの導入とログイン状態を確認
+2. Codex / Claude Codeの有無とバージョンを確認
 3. Node.js 20.12以上とnpmを確認し、必要ならセットアップ内でNode.js LTSを導入
 4. Lark公式CLI `@larksuite/cli` を確認・導入
 5. `lark-channel-bridge` を確認・導入
@@ -15,25 +15,32 @@ Lark / Feishu からローカルのClaude CodeまたはCodexを利用するた�
 7. 議事録を使う場合だけ、QR付きデバイスフローでMinutes/Docsを認証
 8. 議事録が必要な利用者だけ、別Plugin `sfl-gijiroku` を追加
 
-### 1. Mac / Windows共通・Plugin導入前の診断専用コマンド
+### 1. Plugin導入前の診断専用コマンド
 
-Pluginを追加する前に、新しいTerminalまたはPowerShellで次の1行だけを実行します。MacとWindowsで同じです。
+Pluginを追加する前に、新しいTerminalまたはPowerShellでOSに合う1行だけを実行します。Codexエージェントを経由しないため、WindowsのCodex sandbox policyには依存しません。
 
-```text
-codex exec --sandbox read-only --ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check "このPCのLark接続環境を読み取り専用で診断してください。OS名・CPUアーキテクチャ、Node.js、npm、Codex、Claude Code、Lark公式CLI（@larksuite/cli）、lark-channel-bridgeの有無・バージョン・プロファイル名一覧・各プロファイルの稼働状態だけを確認してください。製品シリアル番号、UUID、UDID、token、App Secret、credential、設定本文、ログ本文は読んだり表示したりしないでください。導入、更新、修復、認証、設定変更、起動、停止、再起動は一切行わず、結果をOK・不足・要確認で報告して終了してください。"
+```powershell
+$p=Join-Path $env:TEMP 'sfl-lark-diagnose-0.2.9.ps1'; Invoke-WebRequest -UseBasicParsing 'https://sfl-lark-ai-bridge-guide.pages.dev/downloads/diagnose-windows.ps1' -OutFile $p; try { if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'c138123fc703bd31b5283f8fac1c70bf7e676f3bb3f03bd71452c0fe93c2c274') { throw '診断スクリプトのSHA-256検証に失敗しました。' }; & ([scriptblock]::Create([IO.File]::ReadAllText($p,[Text.Encoding]::UTF8))) } finally { Remove-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue }
 ```
 
-このコマンドはPluginに依存せずOSを自動判定し、OS/CPU、Node.js/npm、Codex/Claude Code、Lark公式CLI、Bridge、既存プロファイル、常駐状態を読み取ります。インストール・更新・設定変更・起動・再起動・認証は行わず、診断結果を返した時点で止まります。
+```bash
+p="$(mktemp "${TMPDIR:-/tmp}/sfl-lark-diagnose.XXXXXX")"; trap 'rm -f "$p"' EXIT; curl -fsSL 'https://sfl-lark-ai-bridge-guide.pages.dev/downloads/diagnose-macos.sh' -o "$p"; printf '%s  %s\n' 'a66ba902d60ca08853b9105d9c2cd9e9d1e0a1d237c650dfcac044f022c9c255' "$p" | shasum -a 256 -c - && bash "$p"
+```
+
+各コマンドはPluginに依存せず、OS/CPU、Node.js/npm、Codex/Claude Code、Lark公式CLI、Bridge、既存プロファイル、常駐状態だけを読み取ります。インストール・更新・設定変更・起動・再起動・認証は行わず、診断結果を返した時点で止まります。
 
 Plugin内の `$lark-diagnose` とOS別の `terminal-diagnose.sh` / `terminal-diagnose.ps1` は、Plugin導入後の再診断用です。初回診断のためにPluginを先に入れません。
 
 ### 2. 診断結果の後、必要な場合だけ基盤を導入
 
-診断結果を確認し、導入を進めると判断した場合だけMarketplaceを登録し、接続基盤Pluginを追加します。
+診断結果を確認し、導入を進めると判断した場合だけSFL配布元からZIPを取得し、SHA-256で破損や差し替えを検知してからローカルMarketplaceへ登録し、接続基盤Pluginを追加します。配布スクリプト自体も一度ファイルへ保存してSHA-256を照合し、検証に通った場合だけ実行します。利用者へGitHub URLを案内しません。
+
+```powershell
+$p=Join-Path $env:TEMP 'sfl-lark-foundation-0.2.9.ps1'; Invoke-WebRequest -UseBasicParsing 'https://sfl-lark-ai-bridge-guide.pages.dev/install/lark-foundation-windows.ps1' -OutFile $p; try { if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'c88b2a3d50a80e9fc959a2d22254b20e9c1bab083753262ce0ae451ca7de1469') { throw '導入スクリプトのSHA-256検証に失敗しました。' }; & ([scriptblock]::Create([IO.File]::ReadAllText($p,[Text.Encoding]::UTF8))) } finally { Remove-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue }
+```
 
 ```bash
-codex plugin marketplace add momiji-project/lark-agent-bridge-plugin --ref main
-codex plugin add lark-agent-bridge@momiji-lark-tools
+p="$(mktemp "${TMPDIR:-/tmp}/sfl-lark-foundation.XXXXXX")"; trap 'rm -f "$p"' EXIT; curl -fsSL 'https://sfl-lark-ai-bridge-guide.pages.dev/install/lark-foundation-macos.sh' -o "$p"; printf '%s  %s\n' '98c865e849e6ce3a23ab311d582abe70d0948ce292af13f001002a942d0e530f' "$p" | shasum -a 256 -c - && bash "$p"
 ```
 
 Plugin追加後に、次の基盤導入コマンドを実行します。
@@ -87,14 +94,19 @@ Bridge本体は再実装せず、Lark公式のChannel SDKを基盤にするMIT�
 
 Claude CodeまたはCodex CLIがインストール済みのmacOS、Linux、Windowsを対象にします。WindowsとmacOSでは、Node.js 20.12以上とnpmが無い場合もセットアップSkillが診断し、明示承認後にNode.js LTSの導入から続行します。WindowsはWindows Package Manager、macOSはチェックサムと署名を検証したNode.js公式インストーラーを使用します。LarkのQR認証、macOSのインストーラー画面、個人Larkデータを利用する場合のuser認証、各エージェントへのログインは利用者本人が行います。
 
-## Codexへインストール
+## Codex / Claude Codeへインストール
 
-先に、前掲のPlugin非依存診断コマンドを実行します。診断結果を確認し、不足分の導入を進める場合だけ次を実行します。
+先に、前掲のPlugin非依存診断コマンドを実行します。診断結果を確認し、不足分の導入を進める場合だけOSに合うSFL配布コマンドを実行します。
+
+```powershell
+$p=Join-Path $env:TEMP 'sfl-lark-foundation-0.2.9.ps1'; Invoke-WebRequest -UseBasicParsing 'https://sfl-lark-ai-bridge-guide.pages.dev/install/lark-foundation-windows.ps1' -OutFile $p; try { if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'c88b2a3d50a80e9fc959a2d22254b20e9c1bab083753262ce0ae451ca7de1469') { throw '導入スクリプトのSHA-256検証に失敗しました。' }; & ([scriptblock]::Create([IO.File]::ReadAllText($p,[Text.Encoding]::UTF8))) } finally { Remove-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue }
+```
 
 ```bash
-codex plugin marketplace add momiji-project/lark-agent-bridge-plugin --ref main
-codex plugin add lark-agent-bridge@momiji-lark-tools
+p="$(mktemp "${TMPDIR:-/tmp}/sfl-lark-foundation.XXXXXX")"; trap 'rm -f "$p"' EXIT; curl -fsSL 'https://sfl-lark-ai-bridge-guide.pages.dev/install/lark-foundation-macos.sh' -o "$p"; printf '%s  %s\n' '98c865e849e6ce3a23ab311d582abe70d0948ce292af13f001002a942d0e530f' "$p" | shasum -a 256 -c - && bash "$p"
 ```
+
+この共通導入スクリプトは、PCに存在するCodex CLIとClaude Code CLIを自動判定します。片方だけならそのエージェントへ、両方なら両方へ同じ接続基盤Pluginを追加します。利用者がOSやエージェントを選ぶ必要はありません。
 
 新しいセッションを開始し、診断結果をもとに導入する場合だけ次を依頼します。
 
@@ -108,14 +120,9 @@ Plugin導入後に状態をもう一度確認するときだけ、再診断用Sk
 $lark-diagnose このPCのLark接続環境を変更せず再診断してください。導入や修復は行わないでください
 ```
 
-## Claude Codeへインストール
+## Claude Codeで続ける場合
 
-Claude Codeで次を実行します。
-
-```text
-/plugin marketplace add momiji-project/lark-agent-bridge-plugin
-/plugin install lark-agent-bridge@momiji-lark-tools
-```
+前掲の共通導入スクリプトがClaude Code CLIを検出した場合、Marketplace登録とPlugin追加も自動で完了します。GitHub URLを直接指定する必要はありません。
 
 Plugin導入前の診断結果を確認し、新しいセッションで導入を進める場合だけ依頼します。
 

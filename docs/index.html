@@ -61,13 +61,13 @@
       <section class="hero" id="top">
         <div class="hero-title-row">
           <div class="hero-copy">
-            <p class="eyebrow"><span></span> SFL · v0.2.8</p>
+            <p class="eyebrow"><span></span> SFL · v0.2.9</p>
             <h1>Larkを、<em>AIエージェントの入口</em>に。</h1>
           </div>
           <div class="hero-summary">
             <p>
               Claude CodeとCodexを、Larkのチャットから安全に操作するための導入プラグインです。
-              Pluginを入れる前にCodex標準の読取専用診断で状態を確認します。結果確認後、必要な場合だけPluginを追加し、セットアップSkillでLark公式CLIとBridgeをQR登録できます。
+              Pluginを入れる前にOS別の読取専用コマンドで状態を確認します。結果確認後、必要な場合だけPluginを追加し、セットアップSkillでLark公式CLIとBridgeをQR登録できます。
             </p>
             <div class="hero-actions">
               <a class="button button-primary" href="#install">5分で導入する</a>
@@ -79,7 +79,7 @@
         <div class="quick-path" aria-label="導入の3ステップ">
           <article>
             <span class="quick-number">01</span>
-            <div><small>DIAGNOSE</small><strong>Pluginなしで診断</strong><p>Mac / Windows共通の読取専用コマンド。</p></div>
+            <div><small>DIAGNOSE</small><strong>Pluginなしで診断</strong><p>Windows / Mac別の読取専用コマンド。</p></div>
           </article>
           <article>
             <span class="quick-number">02</span>
@@ -227,7 +227,7 @@
         <div class="section-heading">
           <p class="kicker">INSTALL</p>
           <h2 id="install-title">診断してから、必要な場合だけ導入</h2>
-          <p>Pluginを追加する前に、Mac / Windows共通の診断専用コマンドを実行します。</p>
+          <p>Pluginを追加する前に、Windows PowerShellまたはMac Terminal用の診断専用コマンドを実行します。</p>
         </div>
 
         <div class="install-card">
@@ -236,21 +236,24 @@
             <button id="install-tab-claude" class="install-tab" role="tab" aria-selected="false" aria-controls="install-panel-claude" data-install="claude">Claude Code</button>
           </div>
           <div id="install-panel-codex" class="install-panel active" role="tabpanel" aria-labelledby="install-tab-codex">
-            <p class="run-prompt"><span>1. Plugin導入前の診断専用コマンド</span><code>codex exec --sandbox read-only --ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check "このPCのLark接続環境を読み取り専用で診断してください。OS名・CPUアーキテクチャ、Node.js、npm、Codex、Claude Code、Lark公式CLI（@larksuite/cli）、lark-channel-bridgeの有無・バージョン・プロファイル名一覧・各プロファイルの稼働状態だけを確認してください。製品シリアル番号、UUID、UDID、token、App Secret、credential、設定本文、ログ本文は読んだり表示したりしないでください。導入、更新、修復、認証、設定変更、起動、停止、再起動は一切行わず、結果をOK・不足・要確認で報告して終了してください。"</code></p>
+            <p class="run-prompt"><span>1. Windows PowerShellで診断</span><code>$p=Join-Path $env:TEMP 'sfl-lark-diagnose-0.2.9.ps1'; Invoke-WebRequest -UseBasicParsing 'https://sfl-lark-ai-bridge-guide.pages.dev/downloads/diagnose-windows.ps1' -OutFile $p; try { if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'c138123fc703bd31b5283f8fac1c70bf7e676f3bb3f03bd71452c0fe93c2c274') { throw 'SHA-256検証失敗' }; &amp; ([scriptblock]::Create([IO.File]::ReadAllText($p,[Text.Encoding]::UTF8))) } finally { Remove-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue }</code></p>
+            <p class="run-prompt"><span>1. Mac Terminalで診断</span><code>p="$(mktemp "${TMPDIR:-/tmp}/sfl-lark-diagnose.XXXXXX")"; trap 'rm -f "$p"' EXIT; curl -fsSL 'https://sfl-lark-ai-bridge-guide.pages.dev/downloads/diagnose-macos.sh' -o "$p"; printf '%s  %s\n' 'a66ba902d60ca08853b9105d9c2cd9e9d1e0a1d237c650dfcac044f022c9c255' "$p" | shasum -a 256 -c - &amp;&amp; bash "$p"</code></p>
             <div class="code-block">
               <button class="copy-button" type="button" data-copy="codex-code">コピー</button>
-              <pre id="codex-code"><code>codex plugin add lark-agent-bridge@momiji-lark-tools</code></pre>
+              <pre id="codex-code"><code>$p=Join-Path $env:TEMP 'sfl-lark-foundation-0.2.9.ps1'; Invoke-WebRequest -UseBasicParsing 'https://sfl-lark-ai-bridge-guide.pages.dev/install/lark-foundation-windows.ps1' -OutFile $p; try { if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'c88b2a3d50a80e9fc959a2d22254b20e9c1bab083753262ce0ae451ca7de1469') { throw 'SHA-256検証失敗' }; &amp; ([scriptblock]::Create([IO.File]::ReadAllText($p,[Text.Encoding]::UTF8))) } finally { Remove-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue }</code></pre>
             </div>
-            <p class="run-prompt"><span>2. 診断後、不足がある場合だけ</span><code>codex '$lark-setup 診断結果をもとに、Lark公式CLIとBridgeの不足分だけを設定してください。'</code></p>
-            <p class="run-prompt"><span>3. Plugin導入後の再診断だけ</span><code>codex '$lark-diagnose このPCのLark接続環境を変更せず再診断してください。導入や修復は行わないでください。'</code></p>
+            <p class="run-prompt"><span>2. MacでPluginを追加する場合</span><code>p="$(mktemp "${TMPDIR:-/tmp}/sfl-lark-foundation.XXXXXX")"; trap 'rm -f "$p"' EXIT; curl -fsSL 'https://sfl-lark-ai-bridge-guide.pages.dev/install/lark-foundation-macos.sh' -o "$p"; printf '%s  %s\n' '98c865e849e6ce3a23ab311d582abe70d0948ce292af13f001002a942d0e530f' "$p" | shasum -a 256 -c - &amp;&amp; bash "$p"</code></p>
+            <p class="run-prompt"><span>3. 診断後、不足がある場合だけ</span><code>codex '$lark-setup 診断結果をもとに、Lark公式CLIとBridgeの不足分だけを設定してください。'</code></p>
+            <p class="run-prompt"><span>4. Plugin導入後の再診断だけ</span><code>codex '$lark-diagnose このPCのLark接続環境を変更せず再診断してください。導入や修復は行わないでください。'</code></p>
           </div>
           <div id="install-panel-claude" class="install-panel" role="tabpanel" aria-labelledby="install-tab-claude" hidden>
-            <p class="run-prompt"><span>1. Plugin導入前の診断専用コマンド</span><code>codex exec --sandbox read-only --ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check "このPCのLark接続環境を読み取り専用で診断してください。OS名・CPUアーキテクチャ、Node.js、npm、Codex、Claude Code、Lark公式CLI（@larksuite/cli）、lark-channel-bridgeの有無・バージョン・プロファイル名一覧・各プロファイルの稼働状態だけを確認してください。製品シリアル番号、UUID、UDID、token、App Secret、credential、設定本文、ログ本文は読んだり表示したりしないでください。導入、更新、修復、認証、設定変更、起動、停止、再起動は一切行わず、結果をOK・不足・要確認で報告して終了してください。"</code></p>
+            <p class="run-prompt"><span>1. Windows PowerShellで診断</span><code>$p=Join-Path $env:TEMP 'sfl-lark-diagnose-0.2.9.ps1'; Invoke-WebRequest -UseBasicParsing 'https://sfl-lark-ai-bridge-guide.pages.dev/downloads/diagnose-windows.ps1' -OutFile $p; try { if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'c138123fc703bd31b5283f8fac1c70bf7e676f3bb3f03bd71452c0fe93c2c274') { throw 'SHA-256検証失敗' }; &amp; ([scriptblock]::Create([IO.File]::ReadAllText($p,[Text.Encoding]::UTF8))) } finally { Remove-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue }</code></p>
+            <p class="run-prompt"><span>1. Mac Terminalで診断</span><code>p="$(mktemp "${TMPDIR:-/tmp}/sfl-lark-diagnose.XXXXXX")"; trap 'rm -f "$p"' EXIT; curl -fsSL 'https://sfl-lark-ai-bridge-guide.pages.dev/downloads/diagnose-macos.sh' -o "$p"; printf '%s  %s\n' 'a66ba902d60ca08853b9105d9c2cd9e9d1e0a1d237c650dfcac044f022c9c255' "$p" | shasum -a 256 -c - &amp;&amp; bash "$p"</code></p>
             <div class="code-block">
               <button class="copy-button" type="button" data-copy="claude-code">コピー</button>
-              <pre id="claude-code"><code>/plugin install lark-agent-bridge@momiji-lark-tools</code></pre>
+              <pre id="claude-code"><code>$p=Join-Path $env:TEMP 'sfl-lark-foundation-0.2.9.ps1'; Invoke-WebRequest -UseBasicParsing 'https://sfl-lark-ai-bridge-guide.pages.dev/install/lark-foundation-windows.ps1' -OutFile $p; try { if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'c88b2a3d50a80e9fc959a2d22254b20e9c1bab083753262ce0ae451ca7de1469') { throw 'SHA-256検証失敗' }; &amp; ([scriptblock]::Create([IO.File]::ReadAllText($p,[Text.Encoding]::UTF8))) } finally { Remove-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue }</code></pre>
             </div>
-            <p class="run-prompt"><span>2. 診断後、不足がある場合だけPluginを追加</span><code>Marketplace未登録の場合は管理者へ依頼してください。</code></p>
+            <p class="run-prompt"><span>2. MacでPluginを追加する場合</span><code>p="$(mktemp "${TMPDIR:-/tmp}/sfl-lark-foundation.XXXXXX")"; trap 'rm -f "$p"' EXIT; curl -fsSL 'https://sfl-lark-ai-bridge-guide.pages.dev/install/lark-foundation-macos.sh' -o "$p"; printf '%s  %s\n' '98c865e849e6ce3a23ab311d582abe70d0948ce292af13f001002a942d0e530f' "$p" | shasum -a 256 -c - &amp;&amp; bash "$p"</code></p>
             <p class="run-prompt"><span>3. 診断後、必要な場合だけ</span><code>/lark-setup 診断結果をもとに、Lark公式CLIとBridgeの不足分だけを設定してください</code></p>
             <p class="run-prompt"><span>4. Plugin導入後の再診断だけ</span><code>/lark-diagnose このPCのLark接続環境を変更せず再診断してください。導入や修復は行わないでください</code></p>
           </div>

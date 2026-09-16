@@ -7,7 +7,7 @@ description: Plugin導入後のMacまたはWindowsで、Lark接続環境をイ�
 
 これは基盤導入ではない。接続基盤Pluginを導入済みの環境で使う、独立した読取専用の再診断である。
 
-新規利用者の初回診断は、このSkillを使うためにPluginを先に追加してはならない。公開導入ガイドに掲載したPlugin非依存の `codex exec --sandbox read-only` コマンドで先に診断し、不足が見つかって導入を進める場合だけ本Pluginを追加する。
+新規利用者の初回診断は、このSkillを使うためにPluginを先に追加してはならない。公開導入ガイドに掲載したWindows PowerShell用またはmacOS Terminal用の独立した読取専用診断コマンドで先に診断し、不足が見つかって導入を進める場合だけ本Pluginを追加する。初回診断に `codex exec --sandbox read-only` は使わない。
 
 ## 絶対条件
 
