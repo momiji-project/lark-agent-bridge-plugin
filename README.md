@@ -36,11 +36,11 @@ Plugin内の `$lark-diagnose` とOS別の `terminal-diagnose.sh` / `terminal-dia
 診断結果を確認し、導入を進めると判断した場合だけSFL配布元からZIPを取得し、SHA-256で破損や差し替えを検知してからローカルMarketplaceへ登録し、接続基盤Pluginを追加します。配布スクリプト自体も一度ファイルへ保存してSHA-256を照合し、検証に通った場合だけ実行します。利用者へGitHub URLを案内しません。
 
 ```powershell
-$p=Join-Path $env:TEMP 'sfl-lark-foundation-0.2.9.ps1'; Invoke-WebRequest -UseBasicParsing 'https://sfl-lark-ai-bridge-guide.pages.dev/install/lark-foundation-windows.ps1' -OutFile $p; try { if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'f9698725d9214fcfdbd69d97c370d3401ab86fc099eed1e41c3f436a6607d5db') { throw '導入スクリプトのSHA-256検証に失敗しました。' }; & ([scriptblock]::Create([IO.File]::ReadAllText($p,[Text.Encoding]::UTF8))) } finally { Remove-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue }
+$p=Join-Path $env:TEMP 'sfl-lark-foundation-0.2.9.ps1'; Invoke-WebRequest -UseBasicParsing 'https://sfl-lark-ai-bridge-guide.pages.dev/install/lark-foundation-windows.ps1' -OutFile $p; try { if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'c9ca649bc3fdf8d8be90f250a822a89a65b1fd2f489331a31d819b9ff5f4fe07') { throw '導入スクリプトのSHA-256検証に失敗しました。' }; & ([scriptblock]::Create([IO.File]::ReadAllText($p,[Text.Encoding]::UTF8))) } finally { Remove-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue }
 ```
 
 ```bash
-p="$(mktemp "${TMPDIR:-/tmp}/sfl-lark-foundation.XXXXXX")"; trap 'rm -f "$p"' EXIT; curl -fsSL 'https://sfl-lark-ai-bridge-guide.pages.dev/install/lark-foundation-macos.sh' -o "$p"; printf '%s  %s\n' 'ff4088a41047405600eedc25e84b2d18425d3d3fcb52b6f7e3586d8b7d68c23b' "$p" | shasum -a 256 -c - && bash "$p"
+p="$(mktemp "${TMPDIR:-/tmp}/sfl-lark-foundation.XXXXXX")"; trap 'rm -f "$p"' EXIT; curl -fsSL 'https://sfl-lark-ai-bridge-guide.pages.dev/install/lark-foundation-macos.sh' -o "$p"; printf '%s  %s\n' 'ca092153528da7f6c6d9ba8d0e265c8acf3ae9996f668e9a66a3e4c7f34facff' "$p" | shasum -a 256 -c - && bash "$p"
 ```
 
 Plugin追加後に、次の基盤導入コマンドを実行します。
@@ -99,11 +99,11 @@ Claude CodeまたはCodex CLIがインストール済みのmacOS、Linux、Windo
 先に、前掲のPlugin非依存診断コマンドを実行します。診断結果を確認し、不足分の導入を進める場合だけOSに合うSFL配布コマンドを実行します。
 
 ```powershell
-$p=Join-Path $env:TEMP 'sfl-lark-foundation-0.2.9.ps1'; Invoke-WebRequest -UseBasicParsing 'https://sfl-lark-ai-bridge-guide.pages.dev/install/lark-foundation-windows.ps1' -OutFile $p; try { if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'f9698725d9214fcfdbd69d97c370d3401ab86fc099eed1e41c3f436a6607d5db') { throw '導入スクリプトのSHA-256検証に失敗しました。' }; & ([scriptblock]::Create([IO.File]::ReadAllText($p,[Text.Encoding]::UTF8))) } finally { Remove-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue }
+$p=Join-Path $env:TEMP 'sfl-lark-foundation-0.2.9.ps1'; Invoke-WebRequest -UseBasicParsing 'https://sfl-lark-ai-bridge-guide.pages.dev/install/lark-foundation-windows.ps1' -OutFile $p; try { if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'c9ca649bc3fdf8d8be90f250a822a89a65b1fd2f489331a31d819b9ff5f4fe07') { throw '導入スクリプトのSHA-256検証に失敗しました。' }; & ([scriptblock]::Create([IO.File]::ReadAllText($p,[Text.Encoding]::UTF8))) } finally { Remove-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue }
 ```
 
 ```bash
-p="$(mktemp "${TMPDIR:-/tmp}/sfl-lark-foundation.XXXXXX")"; trap 'rm -f "$p"' EXIT; curl -fsSL 'https://sfl-lark-ai-bridge-guide.pages.dev/install/lark-foundation-macos.sh' -o "$p"; printf '%s  %s\n' 'ff4088a41047405600eedc25e84b2d18425d3d3fcb52b6f7e3586d8b7d68c23b' "$p" | shasum -a 256 -c - && bash "$p"
+p="$(mktemp "${TMPDIR:-/tmp}/sfl-lark-foundation.XXXXXX")"; trap 'rm -f "$p"' EXIT; curl -fsSL 'https://sfl-lark-ai-bridge-guide.pages.dev/install/lark-foundation-macos.sh' -o "$p"; printf '%s  %s\n' 'ca092153528da7f6c6d9ba8d0e265c8acf3ae9996f668e9a66a3e4c7f34facff' "$p" | shasum -a 256 -c - && bash "$p"
 ```
 
 この共通導入スクリプトは、PCに存在するCodex CLIとClaude Code CLIを自動判定します。片方だけならそのエージェントへ、両方なら両方へ同じ接続基盤Pluginを追加します。利用者がOSやエージェントを選ぶ必要はありません。
